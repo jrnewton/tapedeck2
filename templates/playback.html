@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{template "header.html" (printf "Tape Deck Player - %v" .Title)}}
+
+<body>
+  {{template "pageheader.html" .}}
+  <h2><u>Recording info</u></h2>
+  <h3>{{.Id}} {{.Title}}</h3>
+  <p>
+    {{.Desc}}
+  </p>
+
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{if .}}
+{{template "header.html" (printf "Your Recordings (%v)" (len .))}}
+{{else}}
+{{template "header.html" "Your Recordings"}}
+{{end}}
+
+<body>
+  {{template "pageheader.html" .}}
+  <h2><u>Your Recordings</u></h2>
+
+  {{if .}}
+  {{range .}}
+  <table class="table delete-row-example">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody hx-target="closest tr" hx-swap="outerHTML">
+      <tr>
+        <td><a href="/playback?id={{.Id}}">{{.Title}}</a></td>
+        <td>{{.Desc}}</td>
+        <td>{{.Status}}</td>
+      </tr>
+    </tbody>
+  </table>
+  {{end}}
+  {{else}}
+  <h3>You do not have any recordings.</h3>
+  <p>
+    <a href="/record">Record Now</a>
+  </p>
+  {{end}}
+
+</body>
+
+</html>

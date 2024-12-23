@@ -1,4 +1,16 @@
-#### Golang excludes
+#### My stuff
+# my scratch files
+out
+# vi scratch files
+.*
+
+#### Tapedeck
+tapedeck2
+build_output
+*.tar.gz
+*.db
+
+#### Golang
 # Binaries for programs and plugins
 *.exe
 *.exe~
