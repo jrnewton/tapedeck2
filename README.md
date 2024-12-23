@@ -11,9 +11,11 @@ I had fun making tapedeck v1 but I never finished it.  It could only capture aud
 3. Need easy TLS support, as it's usually the hardest part when setting up new software. Consider punting with an nginx proxy and Let's Encrypt + certbot.
 
 ## TODO
-- [ ] capture existing mp3 and m3u files (port existing functionality).
-- [ ] capture live streams.
-- [ ] plugin to capture existing archived shows from my favorite radio stations.
-- [ ] recordings must be shareable ala "anyone with this link can access".
-- [ ] playback GUI with offline support and background play on IOS (Eg doesn't shut off when you lock your phone).
-- [ ] data storage??? It would work best for me to use Google drive but that goes against Goal #2.
+- [ ] TLS support.
+- [ ] Auth support.
+- [ ] Capture existing mp3 and m3u files (port existing functionality).
+- [ ] Capture live streams.
+- [ ] Plugin to capture existing archived shows from my favorite radio stations.
+- [ ] Recordings must be shareable ala "anyone with this link can access".
+- [ ] Playback GUI with offline support and background play on IOS (Eg doesn't shut off when you lock your phone).
+- [ ] Data storage TBD.  It would work best for me to use Google drive but that goes against Goal #2.
