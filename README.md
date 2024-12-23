@@ -1,7 +1,7 @@
 # tapedeck v2
 This is a new version of http://tapedeck.us.
 
-# Why
+## Why
 I had fun making tapedeck v1 but I never finished it.  It could only capture audio without a builtin playback mechanism.  Trying to revive the old codebase and infrastructure will take too much time due to a large number of dependencies and over engineering.  That was a known downside at the time as I wanted to experiment with a lot of AWS infra.  The fact that it's still running (albeit sans TLS) is pretty cool. 
  The goals for v2 are driven by these failing in v1.
 
