@@ -3,19 +3,18 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"tapedeck"
 )
 
 func usage() {
 	fmt.Println("Usage: the first arg is either 'dev' or 'prod'. The subsequent args are based on the first arg.")
 	fmt.Println("")
-	fmt.Println("  dev server configuration, for local testing only. Will run HTTP only.")
-	fmt.Println(" ./tapedeck dev <directory> <port>")
-	fmt.Println("    directory: server working directory containing ./templates, ./static, etc. Required")
-	fmt.Println("    port: TCPv4 port to listen on. Required")
+	fmt.Println("  dev server configuration, for local testing only.")
+	fmt.Println(" ./tapedeck dev <directory> <listen addr>")
+	fmt.Println("    directory: server working directory containing ./templates, ./static, etc.  Required.")
+	fmt.Println("    listen addr: bind server to this address, format is <address>:<port>.  Use ':<port>' to bind to all local interfaces. Required.")
 	fmt.Println("")
-	fmt.Println("  prod server configuration, for production use. Will run HTTPS only.")
+	fmt.Println("  prod server configuration, for production use.")
 	fmt.Println(" ./tapedeck prod <json config file>")
 	fmt.Println("    json config file: server configuration file.")
 	os.Exit(4)
@@ -37,13 +36,9 @@ func main() {
 		}
 
 		serverDir := args[2]
-		serverPort, atoiErr := strconv.Atoi(args[3])
-		if atoiErr != nil {
-			fmt.Println("third arg must be a numeric port number", atoiErr)
-			os.Exit(43)
-		}
+		listenAddr := args[3]
 
-		rc, serverErr := tapedeck.RunDevServer(serverDir, serverPort)
+		rc, serverErr := tapedeck.RunDevServer(serverDir, listenAddr)
 		if serverErr != nil {
 			fmt.Println(serverErr)
 			os.Exit(rc)

@@ -29,3 +29,36 @@ Under WSL2, anything under /mnt/*/ is like a remote filesystem, that goes over t
 There sqlite can't lock it's database files. Everywhere else, outside the shared filesystem, sqlite will work.
 ```
 Via https://github.com/microsoft/WSL/issues/2395#issuecomment-909045977
+
+## Prod Environment
+Install nginx and certbot
+```
+sudo apt install nginx certbot python3-certbot-nginx
+systemctl enable nginx
+```
+
+Install the certs
+```
+certbot --nginx -d new.tapedeck.us --agree-tos
+```
+
+Setup proxy `/etc/nginx/sites-available/default`
+```
+@@ -118,7 +118,9 @@
+        location / {
+                # First attempt to serve request as file, then
+                # as directory, then fall back to displaying a 404.
+-               try_files $uri $uri/ =404;
++               #try_files $uri $uri/ =404;
++               proxy_pass http://127.0.0.1:8080;
++               include proxy_params;
+        }
+
+        # pass PHP scripts to FastCGI server
+```
+
+Restart
+```
+nginx -t
+systemctl restart nginx
+```
