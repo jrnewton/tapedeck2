@@ -1,20 +1,26 @@
 # Please use Vim to edit me.  
 # It knows to use tabs and ignore your editor settings.
 
+app_name := tapedeck
 out_dir := ./build_output
+server_name := $(app_name)
 server_root := $(out_dir)/server
-bin_name := tapedeck
+bin_name := $(app_name)
 
-package: vars binary out_dir server_root
+package: collect
 	@echo Creating distribution package...
+	tar -C $(out_dir) -czf $(app_name).tar.gz .
+
+collect: vars binary out_dir server_root
+	@echo Collecting distribution files...
 	cp run-dev.sh $(out_dir)
 	cp run-prod.sh $(out_dir)
 	chmod +x $(out_dir)/run-dev.sh
 	chmod +x $(out_dir)/run-prod.sh
-	cp -r ./static/ $(server_root)/static 
-	cp -r ./templates/ $(server_root)/templates 
+	cp tapedeck.db $(server_root)
+	cp -a ./static/. $(server_root)/static/
+	cp -a ./templates/. $(server_root)/templates/
 	cp config-prod.json $(out_dir)
-	tar -C $(out_dir) -czf $(bin_name).tar.gz .
 
 binary: vars out_dir
 	@echo Building binary...
@@ -41,4 +47,4 @@ clean: vars
 	rm -rf $(out_dir)
 
 upload: package
-	scp $(bin_name).tar.gz tapedeck:/usr/local/tapedeck
+	scp $(bin_name).tar.gz $(server_name):/usr/local/$(app_name)

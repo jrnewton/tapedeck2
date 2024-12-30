@@ -1,8 +1,5 @@
 {
   "serverDir": "/usr/local/tapedeck/server",
-  "serverListenAddress": "",
-  "serverListenPort": 443,
-  "dbFile": "/usr/local/tapedeck/server/tapedeck.db",
-  "certFile": "/etc/letsencrypt/live/tapedeck.us/fullchain.pem",
-  "keyFile": "/etc/letsencrypt/live/tapedeck.us/privkey.pem"
+  "serverListenAddr": "127.0.0.1:8080",
+  "dbFile": "/usr/local/tapedeck/server/tapedeck.db"
 }
