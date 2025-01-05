@@ -1,9 +1,12 @@
 # tapedeck v2
-This is a new version of http://tapedeck.us.
+This is a new version of [tapedeck](http://tapedeck.us) ([git repo](https://github.com/jrnewton/tapedeck)).  
 
-Mockup: https://jrnewton.github.io/tapedeck2/
+It's currently a work in progress.  
 
-Live server (may not always be running): https://new.tapedeck.us
+You can see a [UI mockup](https://jrnewton.github.io/tapedeck2/) and try the [live server](https://new.tapedeck.us) (which is not always running).
+
+## What
+As a kid I spent a lot of time recording music with my tape deck from the huge variety of local college radio stations.  While college radio is alive and well thanks to streaming, archives come in differnet shapes and sizes and are limited to the last 2 weeks due to FCC rules.  This project provides a way to capture those archives for personal use and to record live streams when archives are not an option. 
 
 ## Why
 I had fun making [tapedeck v1](https://github.com/jrnewton/tapedeck) but I never finished it.  It could only capture audio without a builtin playback mechanism.  Trying to revive the old codebase and infrastructure will take too much time due to a large number of dependencies and over engineering.  That was a known downside at the time as I wanted to experiment with a lot of AWS infra.  The fact that it's still running (albeit sans TLS) is pretty cool.  The goals for v2 are driven by these failings in v1.
