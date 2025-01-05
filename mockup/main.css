@@ -1,0 +1,85 @@
+:root {
+  --pink: rgba(255,91,158,255);
+  --yellow: rgba(234,243,44,255);
+  --orange: rgba(250,161,7,255);
+  --blue: rgba(143,227,255,255);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  /* font-family: Tahoma, sans-serif; */
+  font-family: "Audiowide", serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 1.5rem;
+
+  background-color: var(--pink);
+
+  margin: 2rem;
+
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+header {
+  font-size: 3rem;
+}
+
+main {
+  background-color: var(--yellow);
+  padding: 1rem;
+  width: 100%;
+
+  /* margin: 0 auto;
+  text-align: center; */
+  /* vertical-align: middle; */
+}
+
+.main__cassette-window {
+  background-color: var(--blue);
+  padding: 5rem;
+  width: 50%;
+  height: 30%;
+
+  /* margin: 0 auto;
+  text-align: center; */
+  /* vertical-align: middle; */
+}
+
+footer {
+  /* padding: 5rem; */
+
+  height: 15rem;
+  width: 100%; 
+
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+}
+
+.footer__left {
+  background: linear-gradient(to bottom right, transparent 30px, var(--orange) 10px);
+  flex-grow: 1;
+}
+
+.footer__gh-logo {
+  background-color: var(--orange);
+  flex-grow: 1;
+}
+
+.footer__gh-logo img {
+  width: 2rem;
+  height: 2rem;
+}
+
+.footer__right {
+  background: linear-gradient(to bottom left, transparent 30px, var(--orange) 10px);
+  flex-grow: 1;
+}
