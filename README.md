@@ -10,7 +10,7 @@ I had fun making [tapedeck v1](https://github.com/jrnewton/tapedeck) but I never
 3. Need easy TLS support, as it's usually the hardest part when setting up new software. Consider punting with an nginx proxy and Let's Encrypt + certbot.
 
 ## TODO
-- [ ] TLS support.
+- [x] TLS support.
 - [ ] Auth support.
 - [ ] Capture existing mp3 and m3u files (port existing functionality).
 - [ ] Capture live streams.
