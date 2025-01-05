@@ -56,15 +56,43 @@ main {
 }
 
 .button {
-  display: inline-block;
-  background-color: white;
-  font: inherit;
-  border: 1px solid black;
+  display: flex;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+  
+  border: 1.5px solid black;
+  border-radius: 8px;
+
   padding: 1rem;
   margin: 1rem auto;
   text-align: center;
   vertical-align: middle;
   font-size: 1rem;
+}
+
+/* the red button 
+.main__record > div {
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid black;
+  border-radius: 50%;
+  background-color: red;
+} */
+
+/* this image is fun inspiration 
+http://alexpoole.info/wp-content/uploads/2013/01/Firebrand_Recording_record_button.jpg
+*/
+.main__record:active,
+.main__record:hover {
+  color: black;
+  background-color: red;
+}
+
+.main__playback:active,
+.main__playback:hover {
+  color: black;
+  background-color: white;
 }
 
 footer {
