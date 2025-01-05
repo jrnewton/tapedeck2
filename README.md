@@ -1,6 +1,9 @@
 # tapedeck v2
 This is a new version of http://tapedeck.us.
 
+Mockup: https://jrnewton.github.io/tapedeck2/
+Live server (may not always be running): https://new.tapedeck.us
+
 ## Why
 I had fun making [tapedeck v1](https://github.com/jrnewton/tapedeck) but I never finished it.  It could only capture audio without a builtin playback mechanism.  Trying to revive the old codebase and infrastructure will take too much time due to a large number of dependencies and over engineering.  That was a known downside at the time as I wanted to experiment with a lot of AWS infra.  The fact that it's still running (albeit sans TLS) is pretty cool.  The goals for v2 are driven by these failings in v1.
 
