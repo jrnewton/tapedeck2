@@ -25,17 +25,31 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
+  /* non-zero body margin will introduce scrollbars */
+  margin: 0; 
+
   font-family: "Audiowide", Tahoma, serif;
   font-weight: 400;
   font-style: normal;
   background-color: var(--pink);
-  margin: 2rem;
+  
+  /* to center #flex-content */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 #flex-content {
-  display: flex;
+  margin: 1em;
+    display: flex;
   flex-flow: column wrap;
+  /* required so element can be centered */
+  width: 100%;
 }
 
 header {
@@ -60,15 +74,18 @@ main {
   color: white;
   background-color: rgba(0, 0, 0, 0.5);
   text-decoration: none;
-  
+  font-size: 1rem;
+
   border: 1.5px solid black;
   border-radius: 8px;
 
   padding: 1rem;
   margin: 1rem auto;
-  text-align: center;
-  vertical-align: middle;
-  font-size: 1rem;
+
+  /* center text */
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 /* the red button 
@@ -105,9 +122,9 @@ footer img {
   height: 1.5rem;
 }
 
-/* really small mobile phone */
+/* really small mobile phone 
 @media (min-width: 576px) {
-  /* increase header text as display gets bigger */
+  //increase header text as display gets bigger
   header {
     font-size: 4rem;
   }
@@ -116,18 +133,26 @@ footer img {
     font-size: 1.5rem;
   }
 }
+*/
 
 /* beyond mobile phone */
 @media (min-width: 768px) {
-  #flex-content { 
+  #flex-content {
     align-content: center;
+  }
+
+  header {
+    font-size: 4rem;
   }
 
   header, main, footer {
     width: 70%;
     max-width: 700px;
   }
-}
 
-/* desktops */
-/* TBD */
+  .button {
+    width: auto;
+    font-size: 1.5rem;
+  }
+
+}
