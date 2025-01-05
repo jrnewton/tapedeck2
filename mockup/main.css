@@ -57,6 +57,7 @@ header {
   padding: 1rem;
   font-size: 2.5rem;
   text-align: center;
+  border-radius: 8px 8px 0 0;
 }
 
 main {
@@ -115,6 +116,7 @@ http://alexpoole.info/wp-content/uploads/2013/01/Firebrand_Recording_record_butt
 footer {
   background-color: var(--orange);
   padding: 1rem;
+  border-radius: 0 0 8px 8px;
 }
 
 footer img {
