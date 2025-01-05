@@ -1,4 +1,20 @@
+/* Breakpoint sizes, taken from bootstrap:
+    X-Small	None	<576px
+    Small	sm	≥576px
+    Medium	md	≥768px
+    Large	lg	≥992px
+    Extra large	xl	≥1200px
+    Extra extra large	xxl	≥1400px
+*/
+
+/* The default styles defined here are for 
+   mobile vertical devices with width < 768px.
+  
+   All other styles are defined at bottom of this file. 
+*/
+
 :root {
+  /* these are based on the favicon image */
   --pink: rgba(255,91,158,255);
   --yellow: rgba(234,243,44,255);
   --orange: rgba(250,161,7,255);
@@ -9,77 +25,81 @@
   box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
-}
-
 body {
-  /* font-family: Tahoma, sans-serif; */
-  font-family: "Audiowide", serif;
+  font-family: "Audiowide", Tahoma, serif;
   font-weight: 400;
   font-style: normal;
-  font-size: 1.5rem;
-
   background-color: var(--pink);
-
   margin: 2rem;
+}
 
+#flex-content {
   display: flex;
-  flex-flow: column nowrap;
+  flex-flow: column wrap;
 }
 
 header {
-  font-size: 3rem;
+  background-color: var(--yellow);
+  padding: 1rem;
+  font-size: 2.5rem;
+  text-align: center;
 }
 
 main {
-  background-color: var(--yellow);
-  padding: 1rem;
-  width: 100%;
-
-  /* margin: 0 auto;
-  text-align: center; */
-  /* vertical-align: middle; */
-}
-
-.main__cassette-window {
   background-color: var(--blue);
-  padding: 5rem;
-  width: 50%;
-  height: 30%;
-
-  /* margin: 0 auto;
-  text-align: center; */
-  /* vertical-align: middle; */
-}
-
-footer {
-  /* padding: 5rem; */
-
-  height: 15rem;
-  width: 100%; 
+  padding: 1rem;
+  align-self: stretch;
 
   display: flex;
-  flex-flow: row nowrap;
+  flex-flow: row wrap;
   justify-content: center;
 }
 
-.footer__left {
-  background: linear-gradient(to bottom right, transparent 30px, var(--orange) 10px);
-  flex-grow: 1;
+.button {
+  display: inline-block;
+  background-color: white;
+  font: inherit;
+  border: 1px solid black;
+  padding: 1rem;
+  margin: 1rem auto;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 1rem;
 }
 
-.footer__gh-logo {
+footer {
   background-color: var(--orange);
-  flex-grow: 1;
+  padding: 1rem;
 }
 
-.footer__gh-logo img {
-  width: 2rem;
-  height: 2rem;
+footer img {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
-.footer__right {
-  background: linear-gradient(to bottom left, transparent 30px, var(--orange) 10px);
-  flex-grow: 1;
+/* really small mobile phone */
+@media (min-width: 576px) {
+  /* increase header text as display gets bigger */
+  header {
+    font-size: 4rem;
+  }
+
+  .button {
+    font-size: 1.5rem;
+  }
 }
+
+/* beyond mobile phone */
+@media (min-width: 768px) {
+  #flex-content { 
+    align-content: center;
+  }
+
+  header, main, footer {
+    width: 70%;
+    max-width: 700px;
+  }
+}
+
+/* desktops */
+/* TBD */
