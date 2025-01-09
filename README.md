@@ -3,7 +3,7 @@ This is a new version of [tapedeck](http://tapedeck.us) ([git repo](https://gith
 
 It's currently a work in progress.  
 
-You can see a [UI mockup](https://jrnewton.github.io/tapedeck2/) and try the [live server](https://new.tapedeck.us) (which is not always running).
+You can see a [UI mockup](https://jrnewton.github.io/tapedeck2/) and try the [live server](https://tapedeck.us) (which is not always running).
 
 ## What
 As a kid I spent a lot of time recording music with my tape deck from the huge variety of local college radio stations.  While college radio is alive and well thanks to streaming, archives come in differnet shapes and sizes and are limited to the last 2 weeks due to FCC rules.  This project provides a way to capture those archives for personal use and to record live streams when archives are not an option. 
