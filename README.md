@@ -18,7 +18,7 @@ I had fun making [tapedeck v1](https://github.com/jrnewton/tapedeck) but I never
 
 ## TODO
 - [x] TLS support.
-- [ ] Auth support.
+- [x] Auth support.
 - [ ] Capture existing mp3 and m3u files (port existing functionality).
 - [ ] Capture live streams.
 - [ ] Plugin to capture existing archived shows from my favorite radio stations.

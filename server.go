@@ -127,11 +127,12 @@ func start(config ServerConfig) (rc int, err error) {
 
 	log.Println("server verification complete")
 
+	// "/s" denotes secure routes and is handled by nginx/oauth2-proxy
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 	http.HandleFunc("/", MakeRootHandler(tmplEngine))
-	http.HandleFunc("/list", MakeListHandler(db, tmplEngine))
-	http.HandleFunc("/playback", MakePlaybackHandler(db, tmplEngine))
-	http.HandleFunc("/record", MakeRecordHandler(db, tmplEngine))
+	http.HandleFunc("/s/list", MakeListHandler(db, tmplEngine))
+	http.HandleFunc("/s/playback", MakePlaybackHandler(db, tmplEngine))
+	http.HandleFunc("/s/record", MakeRecordHandler(db, tmplEngine))
 
 	log.Println("server starting on", config.ServerListenAddr)
 	err = http.ListenAndServe(config.ServerListenAddr, nil)
