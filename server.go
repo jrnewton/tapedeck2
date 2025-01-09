@@ -127,12 +127,19 @@ func start(config ServerConfig) (rc int, err error) {
 
 	log.Println("server verification complete")
 
-	// "/s" denotes secure routes and is handled by nginx/oauth2-proxy
+	// Open routes
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 	http.HandleFunc("/", MakeRootHandler(tmplEngine))
+
+	// Secure routes
 	http.HandleFunc("/s/list", MakeListHandler(db, tmplEngine))
 	http.HandleFunc("/s/playback", MakePlaybackHandler(db, tmplEngine))
 	http.HandleFunc("/s/record", MakeRecordHandler(db, tmplEngine))
+
+	//TODO: define middelware to dump headers based on log level.
+	//TODO: extract `X-Email` header value and maybe `X-User`.
+	//X-Email:[rocketnewton@gmail.com]
+	//X-User:[112165920196384629909]
 
 	log.Println("server starting on", config.ServerListenAddr)
 	err = http.ListenAndServe(config.ServerListenAddr, nil)
