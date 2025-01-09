@@ -13,10 +13,10 @@ package: collect
 
 collect: vars binary out_dir server_root
 	@echo Collecting distribution files...
-	cp run-dev.sh $(out_dir)
-	cp run-prod.sh $(out_dir)
-	chmod +x $(out_dir)/run-dev.sh
-	chmod +x $(out_dir)/run-prod.sh
+	cp start-dev.sh $(out_dir)
+	cp start-prod.sh $(out_dir)
+	chmod +x $(out_dir)/start-dev.sh
+	chmod +x $(out_dir)/start-prod.sh
 	cp tapedeck.db $(server_root)
 	cp -a ./static/. $(server_root)/static/
 	cp -a ./templates/. $(server_root)/templates/
