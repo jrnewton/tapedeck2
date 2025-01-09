@@ -23,7 +23,7 @@
     </thead>
     <tbody hx-target="closest tr" hx-swap="outerHTML">
       <tr>
-        <td><a href="/playback?id={{.Id}}">{{.Title}}</a></td>
+        <td><a href="/s/playback?id={{.Id}}">{{.Title}}</a></td>
         <td>{{.Desc}}</td>
         <td>{{.Status}}</td>
       </tr>
@@ -33,7 +33,7 @@
   {{else}}
   <h3>You do not have any recordings.</h3>
   <p>
-    <a href="/record">Record Now</a>
+    <a href="/s/record">Record Now</a>
   </p>
   {{end}}
 
