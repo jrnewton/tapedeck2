@@ -11,7 +11,7 @@ package: collect
 	@echo Creating distribution package...
 	tar -C $(out_dir) -czf $(app_name).tar.gz .
 
-collect: vars binary out_dir server_root
+collect: vars clean binary out_dir server_root
 	@echo Collecting distribution files...
 	cp start-dev.sh $(out_dir)
 	cp start-prod.sh $(out_dir)
