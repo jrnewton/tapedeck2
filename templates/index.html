@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 
-{{template "header.html" "Tape Deck - record radio streams to the cloud."}}
+{{template "header.html" "Tape Deck - archive service for community radio"}}
 
 <body>
-  {{template "body-head.html" .}}
-  <h3>Welcome!</h3>
-
-  <a href="/s/record">Record</a>
-
-  <a href="/s/list">Playback</a>
+  {{template "body-header.html" .}}
+  <main>
+    <a class="button main__record" href="/s/record">RECORD</a>
+    <a class="button main__playback" href="/s/list">PLAYBACK</a>
+  </main>
+  {{template "body-footer.html" .}}
 </body>
 
 </html>

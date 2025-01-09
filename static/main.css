@@ -1,0 +1,144 @@
+/* Breakpoint sizes, taken from bootstrap:
+    X-Small	None	<576px
+    Small	sm	≥576px
+    Medium	md	≥768px
+    Large	lg	≥992px
+    Extra large	xl	≥1200px
+    Extra extra large	xxl	≥1400px
+*/
+
+/* The default styles defined here are for 
+   mobile vertical devices with width < 768px.
+  
+   All other styles are defined at bottom of this file. 
+*/
+
+:root {
+  /* these are based on the favicon image */
+  --pink: rgba(255,91,158,255);
+  --yellow: rgba(234,243,44,255);
+  --orange: rgba(250,161,7,255);
+  --blue: rgba(143,227,255,255);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  /* non-zero body margin will introduce scrollbars */
+  margin: 0; 
+
+  font-family: "Audiowide", Tahoma, serif;
+  font-weight: 400;
+  font-style: normal;
+  background-color: var(--pink);
+  
+  /* to center #flex-content */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#flex-content {
+  margin: 1em;
+    display: flex;
+  flex-flow: column wrap;
+  /* required so element can be centered */
+  width: 100%;
+}
+
+header {
+  background-color: var(--yellow);
+  padding: 1rem;
+  font-size: 2.5rem;
+  text-align: center;
+  border-radius: 8px 8px 0 0;
+}
+
+header > a {
+  display: box;
+  text-decoration: none;
+  color: inherit;
+}
+
+main {
+  background-color: var(--blue);
+  padding: 1rem;
+  align-self: stretch;
+
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+}
+
+.button {
+  display: flex;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+  font-size: 1rem;
+
+  border: 1.5px solid black;
+  border-radius: 8px;
+
+  padding: 1rem;
+  margin: 1rem auto;
+
+  /* center text */
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* this image is fun inspiration 
+http://alexpoole.info/wp-content/uploads/2013/01/Firebrand_Recording_record_button.jpg
+*/
+.main__record:active,
+.main__record:hover {
+  color: black;
+  background-color: red;
+}
+
+.main__playback:active,
+.main__playback:hover {
+  color: black;
+  background-color: white;
+}
+
+footer {
+  background-color: var(--orange);
+  padding: 1rem;
+  border-radius: 0 0 8px 8px;
+}
+
+footer img {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* beyond mobile phone */
+@media (min-width: 768px) {
+  #flex-content {
+    align-content: center;
+  }
+
+  header {
+    font-size: 4rem;
+  }
+
+  header, main, footer {
+    width: 70%;
+    max-width: 700px;
+  }
+
+  .button {
+    width: auto;
+    font-size: 1.5rem;
+  }
+
+}
