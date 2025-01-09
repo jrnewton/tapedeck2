@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-
 {{template "header.html" (printf "Tape Deck Player - %v" .Title)}}
 
 <body>
-  {{template "body-head.html" .}}
-  <h2><u>Recording info</u></h2>
-  <h3>{{.Id}} {{.Title}}</h3>
-  <p>
-    {{.Desc}}
-  </p>
-
+  {{template "body-header.html" .}}
+  <main style="display: flex; flex-direction: column;">
+    <div>
+      <h1>Playback</h1>
+    </div>
+    <div>
+      <h3>{{.Id}} {{.Title}}</h3>
+    </div>
+    <div>
+      {{.Desc}}
+    </div>
+  </main>
+  {{template "body-footer.html" .}}
 </body>
 
 </html>
