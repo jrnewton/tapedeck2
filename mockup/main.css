@@ -60,6 +60,12 @@ header {
   border-radius: 8px 8px 0 0;
 }
 
+header > a {
+  display: box;
+  text-decoration: none;
+  color: inherit;
+}
+
 main {
   background-color: var(--blue);
   padding: 1rem;
