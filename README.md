@@ -1,5 +1,5 @@
 # tapedeck v2
-This is a new version of [tapedeck](http://tapedeck.us) ([git repo](https://github.com/jrnewton/tapedeck)).  
+This is a new version of [tapedeck](http://old.tapedeck.us) ([git repo](https://github.com/jrnewton/tapedeck)).  
 
 It's currently a work in progress.
 
