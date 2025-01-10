@@ -5,8 +5,8 @@ out
 .*
 
 #### Tapedeck
-tapedeck2
-build_output
+tapedeck
+dist
 *.tar.gz
 *.db
 
