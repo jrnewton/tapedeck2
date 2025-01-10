@@ -2,34 +2,37 @@
 # It knows to use tabs and ignore your editor settings.
 
 app_name := tapedeck
-out_dir := ./build_output
+out_dir := ./dist
 server_name := $(app_name)
-server_root := $(out_dir)/server
+app_dir_path := /usr/local/tapedeck
+app_dir := $(out_dir)$(app_dir_path)
+config_dir_path := /etc/tapedeck
+config_dir := $(out_dir)$(config_dir_path)
 bin_name := $(app_name)
 
 package: collect
 	@echo Creating distribution package...
-	tar -C $(out_dir) -czf $(app_name).tar.gz .
+	tar -C $(out_dir) -czf $(out_dir)/$(app_name).tar.gz .
 
-collect: vars clean binary out_dir server_root
+collect: vars clean binary out_dir app_dir config_dir
 	@echo Collecting distribution files...
-	cp start-dev.sh $(out_dir)
-	cp start-prod.sh $(out_dir)
-	chmod +x $(out_dir)/start-dev.sh
-	chmod +x $(out_dir)/start-prod.sh
-	cp tapedeck.db $(server_root)
-	cp -a ./static/. $(server_root)/static/
-	cp -a ./templates/. $(server_root)/templates/
-	cp config-prod.json $(out_dir)
+	cp tapedeck.db $(app_dir)
+	cp -a ./static/. $(app_dir)/static/
+	cp -a ./templates/. $(app_dir)/templates/
+	cp ./config/tapedeck.json $(config_dir)
 
-binary: vars out_dir
+binary: vars app_dir
 	@echo Building binary...
-	go build -o $(out_dir)/$(bin_name) ./cmd/
-	chmod +x $(out_dir)/$(bin_name)
+	go build -o $(app_dir)/$(bin_name) ./cmd/
+	chmod +x $(app_dir)/$(bin_name)
 
-server_root: vars out_dir
-	@echo Creating server root...
-	mkdir -p $(server_root)
+config_dir: vars out_dir
+	@echo Creating config dir...
+	mkdir -p $(config_dir)
+
+app_dir: vars out_dir
+	@echo Creating app dir...
+	mkdir -p $(app_dir)
 
 out_dir: vars
 	@echo Creating output directory...
@@ -39,12 +42,22 @@ vars:
 	@echo -------------------------------------------------
 	@echo Compiled binary is $(bin_name)
 	@echo Output directory is $(out_dir)
-	@echo Server root directory is $(server_root)
+	@echo app dir is $(app_dir)
+	@echo config dir is $(config_dir)
 	@echo -------------------------------------------------
 
 clean: vars
 	echo Cleaning output directory...
 	rm -rf $(out_dir)
 
-upload: package
-	scp $(bin_name).tar.gz $(server_name):/usr/local/$(app_name)
+# ssh/rsync commands expect an entry in ~/.ssh/config for tapedeck root user
+
+upload: collect
+	# Point 1 - do not use -a; my local user does not exist on remote & I want 
+	#           everything as root.
+	# Point 2 - trailing slash important! Copy _contents_ of left dir into right dir.
+	rsync -rv --delete $(app_dir)/ tapedeck:$(app_dir_path)
+	rsync -rv --delete $(config_dir)/ tapedeck:$(config_dir_path)
+
+reload: upload
+	ssh tapedeck 'systemctl restart tapedeck'

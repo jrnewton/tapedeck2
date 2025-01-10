@@ -1,0 +1,5 @@
+{
+  "serverDir": "/usr/local/tapedeck",
+  "serverListenAddr": "127.0.0.1:8080",
+  "dbFile": "/usr/local/tapedeck/tapedeck.db"
+}
