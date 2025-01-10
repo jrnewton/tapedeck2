@@ -1,7 +1,7 @@
 # tapedeck v2
 This is a new version of [tapedeck](http://old.tapedeck.us) ([git repo](https://github.com/jrnewton/tapedeck)).  
 
-It's currently a work in progress.
+:construction: This is a work in progress :construction:
 
 You can see a [UI mockup](https://jrnewton.github.io/tapedeck2/) and try the [live server](https://tapedeck.us).
 
