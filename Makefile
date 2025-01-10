@@ -12,7 +12,8 @@ bin_name := $(app_name)
 
 package: collect
 	@echo Creating distribution package...
-	tar -C $(out_dir) -czf $(out_dir)/$(app_name).tar.gz .
+	tar -C $(out_dir) -czf /tmp/$(app_name).tar.gz .
+	cp /tmp/$(app_name).tar.gz $(out_dir)
 
 collect: vars clean binary out_dir app_dir config_dir
 	@echo Collecting distribution files...
