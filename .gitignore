@@ -5,8 +5,7 @@ out
 .*
 
 #### Tapedeck
-tapedeck
-dist
+dist/
 *.tar.gz
 *.db
 
