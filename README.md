@@ -19,6 +19,7 @@ I had fun making [tapedeck v1](https://github.com/jrnewton/tapedeck) but I never
 ## TODO
 - [x] TLS support, via nginx.
 - [x] Auth support, via nginx and oauth2-proxy.
+- [x] Production deployment, digital ocean droplet with [rsync deploy](Makefile#L53) and [systemd](config).
 - [ ] Capture existing mp3 and m3u files (port existing functionality).
 - [ ] Capture live streams.
 - [ ] Plugin to capture existing archived shows from my favorite radio stations.
