@@ -1,0 +1,7 @@
+{
+  "serverDir": "../..",
+  "userDir": "../..",
+  "serverListenAddr": "127.0.0.1:8080",
+  "dbFile": "../../system.db",
+  "productionMode": false
+}

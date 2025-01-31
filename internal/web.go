@@ -6,7 +6,21 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strconv"
+	"tapedeck/internal/database"
+	"tapedeck/internal/database/tape"
 )
+
+// GetUserDb extracts the user from the request headers
+// and determines the appropriate [db.Database] object to return.
+func GetUserDb(r *http.Request) (*database.Database, error) {
+	email := r.Header.Get("X-EMAIL")
+
+	if email == "" {
+		return nil, fmt.Errorf("user not authenticated? X-EMAIL header not found")
+	}
+
+	return &database.Database{FilePath: ""}, nil
+}
 
 type handler func(http.ResponseWriter, *http.Request)
 
@@ -35,7 +49,7 @@ func MakeRootHandler(tmplEngine *TemplateEngine) handler {
 	}
 }
 
-func MakeListHandler(db *Database, tmplEngine *TemplateEngine) handler {
+func MakeListHandler(db *database.Database, tmplEngine *TemplateEngine) handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("enter MakeListHandler", r.URL.String())
 		defer log.Println("exit MakeListHandler")
@@ -47,7 +61,7 @@ func MakeListHandler(db *Database, tmplEngine *TemplateEngine) handler {
 			}
 		}()
 
-		tapes, getErr := GetAllTapes(db)
+		tapes, getErr := tape.GetAllTapes(db)
 		log.Println("GetAllTapes returned items: ", len(tapes))
 		for i, v := range tapes {
 			log.Println(i, v)
@@ -69,7 +83,7 @@ func MakeListHandler(db *Database, tmplEngine *TemplateEngine) handler {
 	}
 }
 
-func MakePlaybackHandler(db *Database, tmplEngine *TemplateEngine) handler {
+func MakePlaybackHandler(db *database.Database, tmplEngine *TemplateEngine) handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("enter MakePlaybackHandler", r.URL.String())
 		defer log.Println("exit MakePlaybackHandler")
@@ -89,7 +103,7 @@ func MakePlaybackHandler(db *Database, tmplEngine *TemplateEngine) handler {
 			return
 		}
 
-		tape, getErr := GetTape(db, id)
+		tape, getErr := tape.GetTape(db, id)
 		if getErr != nil {
 			http.Error(w, getErr.Error(), 500)
 			return
@@ -106,7 +120,7 @@ func MakePlaybackHandler(db *Database, tmplEngine *TemplateEngine) handler {
 	}
 }
 
-func MakeRecordHandler(db *Database, tmplEngine *TemplateEngine) handler {
+func MakeRecordHandler(db *database.Database, tmplEngine *TemplateEngine) handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("enter MakeRecordHandler", r.URL.String())
 		defer log.Println("exit MakeRecordHandler")

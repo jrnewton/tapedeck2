@@ -1,0 +1,7 @@
+{
+  "serverDir": "/usr/local/tapedeck/",
+  "userDir": "/var/local/tapedeck/user/",
+  "serverListenAddr": "127.0.0.1:8080",
+  "dbFile": "/var/local/tapedeck/server/system.db",
+  "productionMode": true
+}

@@ -8,25 +8,29 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"tapedeck/internal/database"
+	"tapedeck/internal/database/authorization"
 )
 
-func checkDir(serverDir string, dirName string) (fullDir string, err error) {
-	log.Println("enter checkDir", serverDir, dirName)
+// checkDir will join the parentDir to dirName and check that the new dir exists.
+func checkDir(parentDir string, dirName string) (fullDir string, err error) {
+	log.Println("enter checkDir", parentDir, dirName)
 	defer log.Println("exit checkDir")
 
-	fullDir = filepath.Join(serverDir, dirName)
+	fullDir = filepath.Join(parentDir, dirName)
 	_, err = os.Stat(fullDir)
 	if err != nil {
-		err = fmt.Errorf("failed to verify %s in %s: %w", dirName, serverDir, err)
+		err = fmt.Errorf("failed to verify %s in %s: %w", dirName, parentDir, err)
 	}
 	return
 }
 
 type ServerConfig struct {
 	ServerDir        string `json:"serverDir"`
+	UserDir          string `json:"userDir"`
 	ServerListenAddr string `json:"serverListenAddr"`
 	DbFile           string `json:"dbFile"`
-	productionMode   bool
+	ProductionMode   bool   `jons:"productionMode"`
 }
 
 func readConfig(jsonFilePath string) (ServerConfig, error) {
@@ -45,47 +49,32 @@ func readConfig(jsonFilePath string) (ServerConfig, error) {
 		return config, err
 	}
 
+	config.ServerDir = filepath.Join(config.ServerDir)
+	config.UserDir = filepath.Join(config.UserDir)
+
 	return config, nil
 }
 
-func RunDevServer(serverDir string, listenAddr string) (rc int, err error) {
-	log.Println("enter RunDevServer", serverDir, listenAddr)
-	defer log.Println("exit RunDevServer")
-
-	config := ServerConfig{
-		ServerDir:        serverDir,
-		ServerListenAddr: listenAddr,
-		DbFile:           filepath.Join(serverDir, "tapedeck.db"),
-		productionMode:   false,
-	}
-
-	return start(config)
-}
-
-func RunProdServer(jsonConfigPath string) (rc int, err error) {
-	log.Println("enter RunProdServer", jsonConfigPath)
-	defer log.Println("exit RunProdServer")
+func RunServer(jsonConfigPath string) (rc int, err error) {
+	log.Println("enter RunServer", jsonConfigPath)
+	defer log.Println("exit RunServer")
 
 	config, configErr := readConfig(jsonConfigPath)
 	if configErr != nil {
 		return 209, configErr
 	}
 
-	// populate private fields
-	config.productionMode = true
-
-	return start(config)
-}
-
-func start(config ServerConfig) (rc int, err error) {
-	log.Println("enter start", config)
-	defer log.Println("exit start")
-
 	// config validation
 	log.Println("validate server directory")
 	_, dirErr := os.Stat(config.ServerDir)
 	if dirErr != nil {
 		return 148, dirErr
+	}
+
+	log.Println("validate user directory")
+	_, dirErr2 := os.Stat(config.UserDir)
+	if dirErr2 != nil {
+		return 95, dirErr2
 	}
 
 	log.Println("validate server listen address")
@@ -100,10 +89,21 @@ func start(config ServerConfig) (rc int, err error) {
 	}
 
 	log.Println("using sqlite file", config.DbFile)
-	db := &Database{config.DbFile}
-	dbConnErr := db.TestConnection()
-	if dbConnErr != nil {
-		return 200, fmt.Errorf("db connection test failed: %w", dbConnErr)
+	db := &database.Database{
+		FilePath: config.DbFile,
+	}
+
+	log.Println("upgrade check")
+	upgrade, checkErr := db.UpgradeCheck(authorization.SchemaVersion)
+	if checkErr != nil {
+		return 200, fmt.Errorf("db upgrade check failed: %w", checkErr)
+	}
+
+	if upgrade {
+		log.Println("upgrade required")
+		db.Upgrade()
+	} else {
+		log.Println("upgrade not required")
 	}
 
 	templateDir, tmplErr := checkDir(config.ServerDir, "templates")
@@ -111,7 +111,7 @@ func start(config ServerConfig) (rc int, err error) {
 		return 210, tmplErr
 	}
 
-	cache := config.productionMode
+	cache := config.ProductionMode
 	log.Println("using template directory", templateDir, "and cache", cache)
 	tmplEngine := NewTemplateEngine(templateDir, cache)
 	initErr := tmplEngine.Init()

@@ -17,14 +17,13 @@ package: collect
 
 collect: vars clean binary out_dir app_dir config_dir
 	@echo Collecting distribution files...
-	cp tapedeck.db $(app_dir)
 	cp -a ./static/. $(app_dir)/static/
 	cp -a ./templates/. $(app_dir)/templates/
-	cp ./config/tapedeck.json $(config_dir)
+	cp ./config/prod/tapedeck.json $(config_dir)
 
 binary: vars app_dir
 	@echo Building binary...
-	go build -o $(app_dir)/$(bin_name) ./cmd/
+	go build -o $(app_dir)/$(bin_name) ./cmd/server/
 	chmod +x $(app_dir)/$(bin_name)
 
 config_dir: vars out_dir
@@ -62,3 +61,8 @@ upload: collect
 
 reload: upload
 	ssh tapedeck 'systemctl restart tapedeck'
+
+# database tasks
+sql: vars
+	sqlite3 system.db '.schema --indent' > system.db.sql
+	sqlite3 user.db '.schema --indent' > user.db.sql
