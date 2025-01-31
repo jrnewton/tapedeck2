@@ -8,8 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"tapedeck/internal/database"
-	"tapedeck/internal/database/authorization"
+
+	// avoid clash with local var 'db'
+	dbpkg "tapedeck/internal/db"
+
+	// avoid clash with local var 'user'
+	userpkg "tapedeck/internal/db/user"
 )
 
 // checkDir will join the parentDir to dirName and check that the new dir exists.
@@ -89,12 +93,12 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 	}
 
 	log.Println("using sqlite file", config.DbFile)
-	db := &database.Database{
+	db := &dbpkg.Database{
 		FilePath: config.DbFile,
 	}
 
 	log.Println("upgrade check")
-	upgrade, checkErr := db.UpgradeCheck(authorization.SchemaVersion)
+	upgrade, checkErr := db.UpgradeCheck(userpkg.SchemaVersion)
 	if checkErr != nil {
 		return 200, fmt.Errorf("db upgrade check failed: %w", checkErr)
 	}

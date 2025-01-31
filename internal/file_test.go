@@ -2,11 +2,12 @@ package tapedeck
 
 import (
 	"path/filepath"
-	"tapedeck/internal/database"
+	// avoid clash with local var 'db'
+	dbpkg "tapedeck/internal/db"
 	"testing"
 )
 
-var inputSchema = filepath.Join("./", database.DatabaseFileName)
+var inputSchema = filepath.Join("./", dbpkg.DatabaseFileName)
 
 func TestReadLines(t *testing.T) {
 	err := ReadLines(inputSchema, func(line string) error {

@@ -1,4 +1,4 @@
-package authorization_test
+package tape_test
 
 import (
 	"fmt"
@@ -6,8 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 	tapedeck "tapedeck/internal"
-	"tapedeck/internal/database"
-	"tapedeck/internal/database/authorization"
+
+	// avoid clash with local var 'db'
+	dbpkg "tapedeck/internal/db"
+
+	// avoid clash with local variable 'user'
+	userpkg "tapedeck/internal/db/user"
+
 	"testing"
 
 	"zombiezen.com/go/sqlite"
@@ -17,17 +22,17 @@ import (
 const testEmail = "tapedeck.us@gmail.com"
 
 var testDatabase = filepath.Join("./", "unit-test.db")
-var inputSchema = filepath.Join("./", database.DatabaseFileName)
+var inputSchema = filepath.Join("./", dbpkg.DatabaseFileName)
 
-func setup(t *testing.T) *database.Database {
-	var db *database.Database
-	var createTableSql string
+func setup(t *testing.T) *dbpkg.Database {
+	var db *dbpkg.Database
+	var createTable string
 
 	err := tapedeck.ReadLines(inputSchema, func(line string) error {
 		foundIt := strings.HasPrefix(line, "CREATE TABLE USER ")
 		if foundIt {
-			db = &database.Database{FilePath: testDatabase}
-			createTableSql = line
+			db = &dbpkg.Database{FilePath: testDatabase}
+			createTable = line
 			return nil
 		}
 
@@ -48,15 +53,15 @@ func setup(t *testing.T) *database.Database {
 	defer conn.Close()
 
 	// create table
-	err = sqlitex.ExecuteTransient(conn, createTableSql, &sqlitex.ExecOptions{})
+	err = sqlitex.ExecuteTransient(conn, createTable, &sqlitex.ExecOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// insert dummy data
-	user := authorization.NewUser(testEmail)
+	user := userpkg.NewUser(testEmail)
 
-	_, err = authorization.InsertUser(db, user)
+	_, err = userpkg.InsertUser(db, user)
 
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +74,7 @@ func setup(t *testing.T) *database.Database {
 	return db
 }
 
-func teardown(t *testing.T, db *database.Database) {
+func teardown(t *testing.T, db *dbpkg.Database) {
 	if db != nil {
 		err := tapedeck.DeleteFile(db.FilePath)
 		if err != nil {
@@ -82,7 +87,7 @@ func teardown(t *testing.T, db *database.Database) {
 func TestGetUserByEmail(t *testing.T) {
 	db := setup(t)
 
-	user, err := authorization.GetUserByEmail(db, testEmail)
+	user, err := userpkg.GetUserByEmail(db, testEmail)
 
 	if err != nil {
 		t.Fatal(err)

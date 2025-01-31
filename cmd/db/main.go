@@ -4,7 +4,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"tapedeck/internal/database/authorization"
+
+	// avoid clash with local var 'user'
+	userpkg "tapedeck/internal/db/user"
 )
 
 func main() {
@@ -31,7 +33,7 @@ func main() {
 	switch action {
 	case "add-user":
 		{
-			user := authorization.NewUser(email)
+			user := userpkg.NewUser(email)
 			sqlInsert := fmt.Sprintf("INSERT INTO USER (DATE_CREATED, STATUS, EMAIL, UUID) VALUES('%s','%s', '%s', '%s');",
 				user.DateCreated,
 				user.Status,
