@@ -3,6 +3,7 @@ package authorization_test
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 	tapedeck "tapedeck/internal"
 	"tapedeck/internal/database"
@@ -14,17 +15,19 @@ import (
 )
 
 const testEmail = "tapedeck.us@gmail.com"
-const testDatabase = "./unit-test.db"
+
+var testDatabase = filepath.Join("./", "unit-test.db")
+var inputSchema = filepath.Join("./", database.DatabaseFileName)
 
 func setup(t *testing.T) *database.Database {
 	var db *database.Database
-	var createTable string
+	var createTableSql string
 
-	err := tapedeck.ReadLines("./main.schema.sql", func(line string) error {
+	err := tapedeck.ReadLines(inputSchema, func(line string) error {
 		foundIt := strings.HasPrefix(line, "CREATE TABLE USER ")
 		if foundIt {
 			db = &database.Database{FilePath: testDatabase}
-			createTable = line
+			createTableSql = line
 			return nil
 		}
 
@@ -45,7 +48,7 @@ func setup(t *testing.T) *database.Database {
 	defer conn.Close()
 
 	// create table
-	err = sqlitex.ExecuteTransient(conn, createTable, &sqlitex.ExecOptions{})
+	err = sqlitex.ExecuteTransient(conn, createTableSql, &sqlitex.ExecOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

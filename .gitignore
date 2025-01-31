@@ -8,5 +8,5 @@ out
 dist/
 *.tar.gz
 *.db
-# local config
-dev.json
+# local dev
+user/

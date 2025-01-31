@@ -8,6 +8,8 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+const DatabaseFileName = "tapedeck.db"
+
 type Database struct {
 	FilePath string
 	// schemaVersion is read on startup from the VERSION table in each database

@@ -61,8 +61,3 @@ upload: collect
 
 reload: upload
 	ssh tapedeck 'systemctl restart tapedeck'
-
-# database tasks
-sql: vars
-	sqlite3 system.db '.schema --indent' > system.db.sql
-	sqlite3 user.db '.schema --indent' > user.db.sql

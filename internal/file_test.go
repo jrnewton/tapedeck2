@@ -1,11 +1,15 @@
 package tapedeck
 
 import (
+	"path/filepath"
+	"tapedeck/internal/database"
 	"testing"
 )
 
+var inputSchema = filepath.Join("./", database.DatabaseFileName)
+
 func TestReadLines(t *testing.T) {
-	err := ReadLines("./main.schema.sql", func(line string) error {
+	err := ReadLines(inputSchema, func(line string) error {
 		t.Log("line:", line)
 		return nil
 	})
