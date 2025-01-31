@@ -3,9 +3,7 @@ package tape
 import (
 	"fmt"
 	"log"
-
-	// avoid clash with local var 'db'
-	dbpkg "tapedeck/internal/db"
+	"tapedeck/internal/database"
 
 	"zombiezen.com/go/sqlite"
 )
@@ -89,12 +87,12 @@ func tapeCreator(stmt *sqlite.Stmt) (*Tape, error) {
 	}, nil
 }
 
-func GetAllTapes(db *dbpkg.Database) ([]*Tape, error) {
+func GetAllTapes(db *database.Database) ([]*Tape, error) {
 	log.Println("enter GetAllTapes")
 	defer log.Println("exit GetAllTapes")
 
 	tapes := make([]*Tape, 0)
-	err := db.RunQuery(dbpkg.Query{
+	err := db.RunQuery(database.Query{
 		Name:           "GetAllTapes",
 		Sql:            "SELECT * FROM TAPE;",
 		Named:          nil,
@@ -112,12 +110,12 @@ func GetAllTapes(db *dbpkg.Database) ([]*Tape, error) {
 	return tapes, err
 }
 
-func GetTape(db *dbpkg.Database, id int) (*Tape, error) {
+func GetTape(db *database.Database, id int64) (*Tape, error) {
 	log.Println("enter GetTape", id)
 	defer log.Println("exit GetTape", id)
 
 	var tape *Tape
-	err := db.RunQuery(dbpkg.Query{
+	err := db.RunQuery(database.Query{
 		Name:           "GetTape",
 		Sql:            "SELECT * FROM TAPE WHERE ID=:id;",
 		PerformsUpdate: false,

@@ -4,14 +4,17 @@ package main
 import (
 	"flag"
 	"fmt"
-
-	// avoid clash with local var 'user'
-	userpkg "tapedeck/internal/db/user"
+	"tapedeck/internal/database"
+	"tapedeck/internal/database/user"
 )
 
 func main() {
+
+	var dbFile string
+	flag.StringVar(&dbFile, "dbFile", "", "path to SQLite database file")
+
 	var action string
-	flag.StringVar(&action, "action", "", "Action to run, possible values: add-user, delete-user")
+	flag.StringVar(&action, "action", "", "Action to run, possible values: user-add, user-delete")
 
 	var email string
 	flag.StringVar(&email, "email", "", "User's email address")
@@ -24,26 +27,34 @@ func main() {
 		return
 	}
 
-	if email == "" {
-		fmt.Println("email required")
+	if dbFile == "" {
+		fmt.Println("dbFile required")
 		flag.Usage()
 		return
 	}
 
+	db := database.New(dbFile)
+
+	db.Open(true)
+
 	switch action {
-	case "add-user":
+	case "user-add":
 		{
-			user := userpkg.NewUser(email)
-			sqlInsert := fmt.Sprintf("INSERT INTO USER (DATE_CREATED, STATUS, EMAIL, UUID) VALUES('%s','%s', '%s', '%s');",
-				user.DateCreated,
-				user.Status,
-				user.Email,
-				user.Uuid)
-			fmt.Println(sqlInsert)
+			if email == "" {
+				fmt.Println("email required")
+				flag.Usage()
+				return
+			}
+
+			u := user.New(email)
+			err := user.Insert(db, u)
+			if err != nil {
+				panic(err)
+			}
 		}
-	case "delete-user":
+	case "user-delete":
 		{
-			fmt.Println("delete-user is not implemented")
+			panic("delete-user is not implemented")
 		}
 	default:
 		{

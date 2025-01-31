@@ -1,4 +1,4 @@
-package tapedeck
+package lazy
 
 import (
 	"bufio"
@@ -8,7 +8,7 @@ import (
 
 // A [Writer] that will lazy initialize itself upon first Write
 // and is backed by a [bytes.Buffer].
-type LazyBytesWriter struct {
+type Writer struct {
 	initialized bool
 	buffer      *bytes.Buffer
 	writer      *bufio.Writer
@@ -18,7 +18,7 @@ type LazyBytesWriter struct {
 	lastError error
 }
 
-func (sw *LazyBytesWriter) Bytes() (b []byte, e error) {
+func (sw *Writer) Bytes() (b []byte, e error) {
 	if !sw.initialized {
 		return b, fmt.Errorf("not initialized")
 	}
@@ -35,7 +35,7 @@ func (sw *LazyBytesWriter) Bytes() (b []byte, e error) {
 	return sw.buffer.Bytes(), nil
 }
 
-func (sw *LazyBytesWriter) Write(p []byte) (n int, err error) {
+func (sw *Writer) Write(p []byte) (n int, err error) {
 	if !sw.initialized {
 		sw.buffer = new(bytes.Buffer)
 		sw.writer = bufio.NewWriter(sw.buffer)

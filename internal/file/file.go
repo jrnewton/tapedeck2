@@ -1,11 +1,11 @@
-package tapedeck
+package file
 
 import (
 	"bufio"
 	"os"
 )
 
-func TouchFile(path string) (*os.File, error) {
+func Touch(path string) (*os.File, error) {
 	file, err := os.Create(path)
 	if err != nil {
 		return nil, err
@@ -14,7 +14,7 @@ func TouchFile(path string) (*os.File, error) {
 	return file, nil
 }
 
-func DeleteFile(path string) error {
+func Delete(path string) error {
 	return os.Remove(path)
 }
 
