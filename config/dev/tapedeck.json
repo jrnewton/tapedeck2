@@ -1,6 +1,6 @@
 {
-  "serverDir": "../..",
-  "userDir": "../../user",
+  "webDir": "../..",
+  "userDir": "../../dist/var/local/tapedeck/user",
   "serverListenAddr": "127.0.0.1:8080",
   "dbFile": "../../tapedeck.db",
   "productionMode": false

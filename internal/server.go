@@ -17,7 +17,7 @@ import (
 )
 
 type ServerConfig struct {
-	ServerDir        string `json:"serverDir"`
+	WebDir        string `json:"webDir"`
 	UserDir          string `json:"userDir"`
 	ServerListenAddr string `json:"serverListenAddr"`
 	DbFile           string `json:"dbFile"`
@@ -53,7 +53,7 @@ func readConfig(jsonFilePath string) (ServerConfig, error) {
 		return config, err
 	}
 
-	config.ServerDir = filepath.Join(config.ServerDir)
+	config.WebDir = filepath.Join(config.WebDir)
 	config.UserDir = filepath.Join(config.UserDir)
 
 	return config, nil
@@ -69,8 +69,8 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 	}
 
 	// config validation
-	log.Println("validate server directory")
-	_, dirErr := os.Stat(config.ServerDir)
+	log.Println("validate web directory")
+	_, dirErr := os.Stat(config.WebDir)
 	if dirErr != nil {
 		return 148, dirErr
 	}
@@ -78,6 +78,9 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 	log.Println("validate user directory")
 	_, dirErr2 := os.Stat(config.UserDir)
 	if dirErr2 != nil {
+		if !config.ProductionMode {
+			log.Println("user directory not found, run `make user` to create it")
+		}
 		return 95, dirErr2
 	}
 
@@ -86,7 +89,7 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 		return 92, fmt.Errorf("invalid server listen address: %v", config.ServerListenAddr)
 	}
 
-	templateDir, tmplErr := checkDir(config.ServerDir, "templates")
+	templateDir, tmplErr := checkDir(config.WebDir, "templates")
 	if tmplErr != nil {
 		return 210, tmplErr
 	}
@@ -99,7 +102,7 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 		return 217, fmt.Errorf("template engine init failed: %w", initErr)
 	}
 
-	staticDir, staticErr := checkDir(config.ServerDir, "static")
+	staticDir, staticErr := checkDir(config.WebDir, "static")
 	if staticErr != nil {
 		return 222, staticErr
 	}
