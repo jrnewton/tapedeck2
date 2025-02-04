@@ -121,9 +121,10 @@ func GetTape(db *database.Database, id int64) (*Tape, error) {
 		PerformsUpdate: false,
 		Named:          map[string]any{":id": id},
 		ResultFunc: func(stmt *sqlite.Stmt) error {
-			tape, err := tapeCreator(stmt)
-			if err != nil {
-				log.Println("tape returned", tape)
+			t, err := tapeCreator(stmt)
+			if err == nil {
+				log.Println("tape returned", t)
+				tape = t
 			}
 			return err
 		},

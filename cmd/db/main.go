@@ -6,18 +6,19 @@ import (
 	"fmt"
 	"tapedeck/internal/database"
 	"tapedeck/internal/database/user"
+	"tapedeck/internal/file"
 )
 
 func main() {
 
 	var dbFile string
-	flag.StringVar(&dbFile, "dbFile", "", "path to SQLite database file")
+	flag.StringVar(&dbFile, "dbFile", "", "Path to SQLite database file")
 
 	var action string
-	flag.StringVar(&action, "action", "", "Action to run, possible values: user-add, user-delete")
+	flag.StringVar(&action, "action", "", "Action to run, possible values: user-add, user-delete, upgrade")
 
 	var email string
-	flag.StringVar(&email, "email", "", "User's email address")
+	flag.StringVar(&email, "email", "", "User's email address for user-xxx actions")
 
 	flag.Parse()
 
@@ -35,33 +36,29 @@ func main() {
 
 	db := database.New(dbFile)
 
-	db.Open(true)
-
-	switch action {
-	case "user-add":
-		{
-			if email == "" {
-				fmt.Println("email required")
-				flag.Usage()
-				return
-			}
-
-			u := user.New(email)
-			err := user.Insert(db, u)
-			if err != nil {
-				panic(err)
-			}
-		}
-	case "user-delete":
-		{
-			panic("delete-user is not implemented")
-		}
-	default:
-		{
-			fmt.Printf("Unknown action value '%s'\n", action)
+	if action == "upgrade" {
+		file.Touch(dbFile)
+		db.Open()
+		db.Upgrade()
+		db.Close()
+	} else if action == "user-add" {
+		if email == "" {
+			fmt.Println("email required")
 			flag.Usage()
 			return
 		}
-	}
 
+		db.Open()
+		u := user.New(email)
+		err := user.Insert(db, u)
+		if err != nil {
+			panic(err)
+		}
+		db.Close()
+	} else if action == "user-delete" {
+		panic("delete-user is not implemented")
+	} else {
+		fmt.Printf("Unknown action value '%s'\n", action)
+		flag.Usage()
+	}
 }

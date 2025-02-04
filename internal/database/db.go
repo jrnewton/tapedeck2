@@ -17,37 +17,75 @@ import (
 
 const DatabaseFileName = "tapedeck.db"
 
+// This contains the full database schema including
+// additional changes for incremental upgrades.
+//
 //go:embed schema.sql
 var sql string
+
+type State int
+
+const (
+	new State = iota
+	opened
+	closed
+)
 
 type Database struct {
 	filePath   string
 	schemaData string
+	state      State
 }
 
 func (db *Database) String() string {
-	return fmt.Sprintf("database %v", db.filePath)
+	return fmt.Sprintf("database %v %v", db.filePath, db.state)
 }
 
 func New(filePath string) *Database {
 	return &Database{
 		filePath:   filePath,
 		schemaData: sql,
+		state:      new,
 	}
 }
 
-// Open will prepare the database for use by checking
+func (db *Database) Open() {
+	db.open(false)
+}
+
+// open will prepare the database for use by checking
 // for an existing file and performing any schema upgrades.
 // It will return upon success or panic when an error occurs.
-func (db *Database) Open(dbFileMustExist bool) {
-	log.Println("enter Open", db)
-	defer log.Println("exit Open")
+func (db *Database) open(create bool) {
+	log.Println("enter open", db, create)
+	defer log.Println("exit open")
 
-	if dbFileMustExist {
-		_, err := os.Stat(db.filePath)
-		if err != nil {
-			panic(err)
+	if db.state != new {
+		log.Panicf("database not in state new: %v\n", db)
+	}
+
+	_, err := os.Stat(db.filePath)
+	if err != nil {
+		if create {
+			log.Printf("creating database file\n")
+			_, err = file.Touch(db.filePath)
+			if err != nil {
+				log.Panicf("could not create database file at %v, %v\n", db.filePath, err)
+			}
+		} else {
+			log.Panicf("database file not found: %v\n", err)
 		}
+	}
+	db.state = opened
+}
+
+// upgrade performs a database upgrade and returns on success or panics.
+func (db *Database) Upgrade() {
+	log.Println("enter upgrade", db)
+	defer log.Println("exit upgrade")
+
+	if db.state != opened {
+		log.Panicf("database not in state open: %v\n", db)
 	}
 
 	// TODO: follow the 12 steps
@@ -67,6 +105,13 @@ func (db *Database) Open(dbFileMustExist bool) {
 		log.Panicf("upgrade failed, openConn: %v\n", err)
 	}
 
+	defer func() {
+		deferErr := closeConn(conn, err)
+		if deferErr != nil {
+			panic(deferErr)
+		}
+	}()
+
 	err = sqlitemigration.Migrate(context.TODO(), conn, schema)
 	if err != nil {
 		log.Panicf("upgrade failed, migration: %v\n", err)
@@ -85,16 +130,25 @@ func (db *Database) Open(dbFileMustExist bool) {
 	}
 }
 
-func (db *Database) Close(removeDbFile bool) {
-	log.Println("enter Close", db)
-	defer log.Println("exit Close")
+func (db *Database) Close() {
+	db.close(false)
+}
 
-	if removeDbFile {
+func (db *Database) close(delete bool) {
+	log.Println("enter close", db, delete)
+	defer log.Println("exit close")
+
+	if db.state != opened {
+		log.Panicf("database not in state open: %v\n", db)
+	}
+
+	if delete {
 		err := file.Delete(db.filePath)
 		if err != nil {
 			panic(err)
 		}
 	}
+	db.state = closed
 }
 
 func (db *Database) RunQuery(query Query) (err error) {
@@ -105,9 +159,11 @@ func (db *Database) RunQuery(query Query) (err error) {
 	if err != nil {
 		return
 	}
-	defer func() { err = closeConn(conn, err) }()
+	defer func() { 
+		err = closeConn(conn, err) 
+	}()
 
-	log.Println("execute query", query.Sql)
+	log.Println("execute query", query.Sql, query.Named)
 
 	err = sqlitex.Execute(conn, query.Sql, &sqlitex.ExecOptions{
 		Named:      query.Named,

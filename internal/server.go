@@ -109,8 +109,8 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 	db := database.New(config.DbFile)
 
 	log.Println("open database")
-	db.Open(true)
-	defer db.Close(false)
+	db.Open()
+	defer db.Close()
 
 	log.Println("server verification complete")
 
