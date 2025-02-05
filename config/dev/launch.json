@@ -13,12 +13,17 @@
       ]
     },
     {
-      "name": "DB tools",
+      "name": "DB upgrade",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/cmd/db/main.go",
-      "args": []
+      "args": [
+        "-dbFile",
+        "./../../tapedeck.db",
+        "-action",
+        "upgrade"
+      ]
     }
   ]
 }
