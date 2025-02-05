@@ -79,7 +79,22 @@ func (db *Database) open(create bool) {
 	db.state = opened
 }
 
-// upgrade performs a database upgrade and returns on success or panics.
+// print the internal schema table or panic
+func schemaReport(conn *sqlite.Conn) {
+	const listSchemaQuery = `SELECT TYPE, NAME FROM sqlite_schema ORDER BY 1, 2;`
+	err := sqlitex.ExecuteTransient(conn, listSchemaQuery, &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			log.Printf("  %-5s %s", stmt.ColumnText(0), stmt.ColumnText(1))
+			return nil
+		},
+	})
+
+	if err != nil {
+		log.Panicf("sqlite_schema query failed: %v\n", err)
+	}
+}
+
+// upgrade performs a database upgrade and returns on success or panic
 func (db *Database) Upgrade() {
 	log.Println("enter upgrade", db)
 	defer log.Println("exit upgrade")
@@ -88,10 +103,18 @@ func (db *Database) Upgrade() {
 		log.Panicf("database not in state open: %v\n", db)
 	}
 
-	// TODO: follow the 12 steps
-	// https://sqlite.org/lang_altertable.html#making_other_kinds_of_table_schema_changes
+	rawLines := strings.Split(db.schemaData, "\n")
 
-	schemaLines := strings.Split(db.schemaData, "\n")
+	// remove SQL comments
+	schemaLines := make([]string, 0)
+	for _, line := range rawLines {
+		if !strings.HasPrefix(line, "--") {
+			schemaLines = append(schemaLines, line)
+		}
+	}
+
+	log.Printf("schema lines: %d\n", len(schemaLines))
+
 	if len(schemaLines) == 0 {
 		panic("missing schema data")
 	}
@@ -112,22 +135,16 @@ func (db *Database) Upgrade() {
 		}
 	}()
 
+	log.Printf("schema before upgrade:\n")
+	schemaReport(conn)
+
 	err = sqlitemigration.Migrate(context.TODO(), conn, schema)
 	if err != nil {
 		log.Panicf("upgrade failed, migration: %v\n", err)
 	}
 
-	const listSchemaQuery = `SELECT TYPE, NAME FROM sqlite_master ORDER BY 1, 2;`
-	err = sqlitex.ExecuteTransient(conn, listSchemaQuery, &sqlitex.ExecOptions{
-		ResultFunc: func(stmt *sqlite.Stmt) error {
-			log.Printf("%-5s %s\n", stmt.ColumnText(0), stmt.ColumnText(1))
-			return nil
-		},
-	})
-
-	if err != nil {
-		log.Printf("report failed: %v\n", err)
-	}
+	log.Printf("schema after upgrade:\n")
+	schemaReport(conn)
 }
 
 func (db *Database) Close() {
@@ -159,8 +176,8 @@ func (db *Database) RunQuery(query Query) (err error) {
 	if err != nil {
 		return
 	}
-	defer func() { 
-		err = closeConn(conn, err) 
+	defer func() {
+		err = closeConn(conn, err)
 	}()
 
 	log.Println("execute query", query.Sql, query.Named)

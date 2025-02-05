@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"tapedeck/internal/database"
 	"tapedeck/internal/database/user"
-	"tapedeck/internal/file"
 )
 
 func main() {
@@ -37,7 +36,6 @@ func main() {
 	db := database.New(dbFile)
 
 	if action == "upgrade" {
-		file.Touch(dbFile)
 		db.Open()
 		db.Upgrade()
 		db.Close()
