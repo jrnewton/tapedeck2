@@ -12,12 +12,41 @@ import (
 	"strconv"
 	"strings"
 	"tapedeck/internal/database"
-	tape "tapedeck/internal/database/tape"
+	"tapedeck/internal/database/tape"
 	"tapedeck/internal/lazy"
 )
 
+// Typically i define return codes
+// based on the line number which is a
+// cheap way to ensure uniqueness.
+// I like return unique values as it provides
+// a quick pointer to where things went
+// off the rails.
+type ReturnCode int
+
+func (rc ReturnCode) Code() int {
+	return int(rc)
+}
+
+const (
+	RcOkay ReturnCode = iota
+	// start after 4 which is always warning
+	_
+	_
+	_
+	_
+	RcConfigFile
+	RcWebDir
+	RcUserDir
+	RcListenAddress
+	RcTemplatesDir
+	RcTemplateEngine
+	RcStaticDir
+	RcListenAndServe
+)
+
 type ServerConfig struct {
-	WebDir        string `json:"webDir"`
+	WebDir           string `json:"webDir"`
 	UserDir          string `json:"userDir"`
 	ServerListenAddr string `json:"serverListenAddr"`
 	DbFile           string `json:"dbFile"`
@@ -59,20 +88,20 @@ func readConfig(jsonFilePath string) (ServerConfig, error) {
 	return config, nil
 }
 
-func RunServer(jsonConfigPath string) (rc int, err error) {
+func RunServer(jsonConfigPath string) (rc ReturnCode, err error) {
 	log.Println("enter RunServer", jsonConfigPath)
 	defer log.Println("exit RunServer")
 
 	config, configErr := readConfig(jsonConfigPath)
 	if configErr != nil {
-		return 209, configErr
+		return RcConfigFile, configErr
 	}
 
 	// config validation
 	log.Println("validate web directory")
 	_, dirErr := os.Stat(config.WebDir)
 	if dirErr != nil {
-		return 148, dirErr
+		return RcWebDir, dirErr
 	}
 
 	log.Println("validate user directory")
@@ -81,17 +110,17 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 		if !config.ProductionMode {
 			log.Println("user directory not found, run `make user` to create it")
 		}
-		return 95, dirErr2
+		return RcUserDir, dirErr2
 	}
 
 	log.Println("validate server listen address")
 	if strings.Count(config.ServerListenAddr, ":") != 1 {
-		return 92, fmt.Errorf("invalid server listen address: %v", config.ServerListenAddr)
+		return RcListenAddress, fmt.Errorf("invalid server listen address: %v", config.ServerListenAddr)
 	}
 
 	templateDir, tmplErr := checkDir(config.WebDir, "templates")
 	if tmplErr != nil {
-		return 210, tmplErr
+		return RcTemplatesDir, tmplErr
 	}
 
 	cache := config.ProductionMode
@@ -99,12 +128,12 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 	tmplEngine := newTemplateEngine(templateDir, cache)
 	initErr := tmplEngine.Init()
 	if initErr != nil {
-		return 217, fmt.Errorf("template engine init failed: %w", initErr)
+		return RcTemplateEngine, fmt.Errorf("template engine init failed: %w", initErr)
 	}
 
 	staticDir, staticErr := checkDir(config.WebDir, "static")
 	if staticErr != nil {
-		return 222, staticErr
+		return RcStaticDir, staticErr
 	}
 	log.Println("using static directory", staticDir)
 
@@ -134,9 +163,9 @@ func RunServer(jsonConfigPath string) (rc int, err error) {
 	log.Println("server starting on", config.ServerListenAddr)
 	err = http.ListenAndServe(config.ServerListenAddr, nil)
 	if err != nil {
-		return 286, err
+		return RcListenAndServe, err
 	} else {
-		return 0, nil
+		return RcOkay, nil
 	}
 }
 
@@ -250,7 +279,7 @@ func makePlaybackHandler(db *database.Database, tmplEngine *TemplateEngine) hand
 	}
 }
 
-func makeRecordHandler(db *database.Database, tmplEngine *TemplateEngine) handler {
+func makeRecordHandler(_ *database.Database, tmplEngine *TemplateEngine) handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("enter MakeRecordHandler", r.URL.String())
 		defer log.Println("exit MakeRecordHandler")

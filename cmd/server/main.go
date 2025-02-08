@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	tapedeck "tapedeck/internal"
+	app "tapedeck/internal"
 )
 
 func main() {
@@ -19,9 +19,9 @@ func main() {
 		os.Exit(4)
 	}
 
-	rc, serverErr := tapedeck.RunServer(configFile)
+	rc, serverErr := app.RunServer(configFile)
 	if serverErr != nil {
 		fmt.Println(serverErr)
-		os.Exit(rc)
+		os.Exit(rc.Code())
 	}
 }
