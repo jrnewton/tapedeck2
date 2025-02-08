@@ -61,6 +61,7 @@ certbot --nginx -d tapedeck.us --agree-tos
 - install oauth2-proxy binary to `/usr/local/sbin/`
 - generate a cookie secret. See https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview
 - configure Google as oauth provider: https://oauth2-proxy.github.io/oauth2-proxy/configuration/providers/google
+  - define redirect URIs and javascript origins of `https://tapedeck.us` and `http://localhost`
 - copy [oauth2-proxy.toml](config/prod/oauth2-proxy.toml) to `/etc/oauth2-proxy/oauth2-proxy.toml`
 - install [oauth2-proxy.service](config/prod/oauth2-proxy.service) following instructions in the file.
 

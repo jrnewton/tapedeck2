@@ -7,6 +7,9 @@ email_domains="*"
 pass_user_headers="true"
 set_xauthrequest="true"
 prefer_email_to_user="true"
+# needed for local dev
+# see https://github.com/oauth2-proxy/oauth2-proxy/issues/2949
+redirect_url="http://localhost:8100/oauth2/callback"
 ##### DO NOT COMMIT ######
 #client_id=#see secrets repo
 #client_secret=#see secrets repo
