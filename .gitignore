@@ -1,6 +1,7 @@
 #### My stuff
 # my scratch files
 out
+*.bak
 # vi scratch files
 .*
 
