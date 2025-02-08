@@ -2,6 +2,8 @@
 # Most of this content comes from https://oauth2-proxy.github.io/oauth2-proxy/configuration/integration
 # See 'tapedeck' for app specific bits.
 
+# Problems?
+# tail -f /var/log/nginx/error.log
 server {
   listen 80 default_server;
   listen [::]:80 default_server;
