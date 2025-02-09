@@ -87,19 +87,19 @@ func tapeCreator(stmt *sqlite.Stmt) (*Tape, error) {
 	}, nil
 }
 
-func GetAllTapes(db *database.Database) ([]*Tape, error) {
-	log.Println("enter GetAllTapes")
-	defer log.Println("exit GetAllTapes")
+func GetTapesForUser(userId int64, db *database.Database) ([]*Tape, error) {
+	log.Println("enter GetTapesForUser", userId)
+	defer log.Println("exit GetTapesForUser")
 
 	tapes := make([]*Tape, 0)
 	err := db.RunQuery(database.Query{
-		Name:           "GetAllTapes",
-		Sql:            "SELECT * FROM TAPE;",
-		Named:          nil,
+		Name:           "GetTapesForUser",
+		Sql:            "SELECT * FROM TAPE WHERE USER_ID=:id;",
+		Named:          map[string]any{":id": userId},
 		PerformsUpdate: false,
 		ResultFunc: func(stmt *sqlite.Stmt) error {
 			tape, err := tapeCreator(stmt)
-			if err != nil {
+			if err == nil {
 				tapes = append(tapes, tape)
 				log.Println("tape added", tape)
 			}
@@ -110,7 +110,7 @@ func GetAllTapes(db *database.Database) ([]*Tape, error) {
 	return tapes, err
 }
 
-func GetTape(db *database.Database, id int64) (*Tape, error) {
+func GetTape(id int64, db *database.Database) (*Tape, error) {
 	log.Println("enter GetTape", id)
 	defer log.Println("exit GetTape", id)
 

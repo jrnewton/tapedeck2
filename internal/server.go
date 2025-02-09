@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -13,8 +14,11 @@ import (
 	"strings"
 	"tapedeck/internal/database"
 	"tapedeck/internal/database/tape"
+	"tapedeck/internal/database/user"
 	"tapedeck/internal/lazy"
 )
+
+const logHeaders = false
 
 // Typically i define return codes
 // based on the line number which is a
@@ -43,6 +47,10 @@ const (
 	RcStaticDir
 	RcListenAndServe
 )
+
+type contextKey string
+
+const userKey contextKey = "user"
 
 type ServerConfig struct {
 	WebDir           string `json:"webDir"`
@@ -147,12 +155,12 @@ func RunServer(jsonConfigPath string) (rc ReturnCode, err error) {
 
 	// Open routes
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
-	http.HandleFunc("/", chain(mlog, makeRootHandler(tmplEngine)))
+	http.HandleFunc("/", chain(makeLogger, makeRootHandler(tmplEngine)))
 
 	// Secure routes
-	http.HandleFunc("/s/list", makeListHandler(db, tmplEngine))
-	http.HandleFunc("/s/playback", makePlaybackHandler(db, tmplEngine))
-	http.HandleFunc("/s/record", makeRecordHandler(db, tmplEngine))
+	http.HandleFunc("/s/list", chain(makeLogger, makeUserLookup(db), makeListHandler(db, tmplEngine)))
+	http.HandleFunc("/s/playback", chain(makeLogger, makeUserLookup(db), makePlaybackHandler(db, tmplEngine)))
+	http.HandleFunc("/s/record", chain(makeLogger, makeUserLookup(db), makeRecordHandler(db, tmplEngine)))
 
 	log.Println("server starting on", config.ServerListenAddr)
 	err = http.ListenAndServe(config.ServerListenAddr, nil)
@@ -163,17 +171,9 @@ func RunServer(jsonConfigPath string) (rc ReturnCode, err error) {
 	}
 }
 
-// CheckerUser extracts the user from the request headers
-// and determines if the user is allowed to proceed
-// func CheckUser(db *database.Database, r *http.Request) (*userpkg.User, error) {
-// 	email := r.Header.Get("X-EMAIL")
-
-// 	if email == "" {
-// 		return nil, fmt.Errorf("user not authenticated? X-EMAIL header not found")
-// 	}
-
-// 	return userpkg.GetUserByEmail(db, email)
-// }
+// middleware is a [http.HandlerFunc] that can be chained together with other
+// functions to build so-called "middleware"
+type middleware func(http.HandlerFunc) http.HandlerFunc
 
 // chain takes middleware functions
 func chain(m ...middleware) http.HandlerFunc {
@@ -182,7 +182,7 @@ func chain(m ...middleware) http.HandlerFunc {
 	}
 
 	wrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("final\n")
+		//log.Printf("final\n")
 	})
 
 	for i := len(m) - 1; i >= 0; i-- {
@@ -192,23 +192,78 @@ func chain(m ...middleware) http.HandlerFunc {
 	return wrapped
 }
 
-// middleware is a [http.HandlerFunc] that can be chained together with other
-// functions to build so-called "middleware"
-type middleware func(http.HandlerFunc) http.HandlerFunc
+func getUserFromRequest(w http.ResponseWriter, r *http.Request) *user.User {
+	u, ok := r.Context().Value(userKey).(*user.User)
+	if !ok {
+		http.Error(w, "user not found in context", http.StatusInternalServerError)
+		return nil
+	} else {
+		log.Printf("found user %v\n", u)
+		return u
+	}
+}
 
-// mlog is a [middleware] logging function
-func mlog(next http.HandlerFunc) http.HandlerFunc {
+// makeUserLookup creates a [middleware] function that will retrieve the authenticated user
+// and make it available in the request context.
+func makeUserLookup(db *database.Database) middleware {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			u := r.Context().Value(userKey)
+
+			if u == nil {
+				userEmail := r.Header.Get("X-EMAIL")
+				userId := r.Header.Get("X-USER")
+				log.Printf("X-EMAIL is %s\n", userEmail)
+				log.Printf("X-USER is %s\n", userId)
+
+				if userEmail == "" {
+					log.Printf("X-EMAIL header not set\n")
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+
+				u, err := user.GetByEmail(db, userEmail)
+
+				if err != nil {
+					log.Printf("error getting user object: %v\n", err)
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+
+				if u == nil {
+					log.Printf("user object not found for email %q\n", userEmail)
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+
+				ctx := context.WithValue(r.Context(), userKey, u)
+				newRequest := r.WithContext(ctx)
+
+				log.Printf("user added to request context %v\n", ctx)
+				next.ServeHTTP(w, newRequest)
+			} else {
+				log.Printf("user found in request context %v\n", u)
+				next.ServeHTTP(w, r)
+			}
+		}
+	}
+}
+
+// makeLogger is a [middleware] function that logs all header values.
+func makeLogger(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//TODO: define middelware to dump headers based on log level.
-		//TODO: extract `X-Email` header value and maybe `X-User`.
-		//X-Email:[rocketnewton@gmail.com]
-		//X-User:[112165920196384629909]
-
-		email := r.Header.Get("X-EMAIL")
-		user := r.Header.Get("X-USER")
-		// log.Printf("all headers %v\n", r.Header)
-		log.Printf("email is '%s', user is '%s'\n", email, user)
-
+		if logHeaders {
+			log.Printf("-- HEADERS ---------------")
+			for key, val := range r.Header {
+				for _, v := range val {
+					// user agent is roughly 130
+					if len(v) > 130 {
+						v = v[:130] + "..."
+					}
+					log.Printf("  %s=%s", key, v)
+				}
+			}
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -241,98 +296,114 @@ func makeRootHandler(tmplEngine *templateEngine) middleware {
 	}
 }
 
-func makeListHandler(db *database.Database, tmplEngine *templateEngine) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("enter MakeListHandler", r.URL.String())
-		defer log.Println("exit MakeListHandler")
-		defer func() {
-			if r := recover(); r != nil {
-				msg := fmt.Sprintf("panic in MakeListHandler: %v\n%v", r, string(debug.Stack()))
-				log.Println(msg)
-				http.Error(w, msg, 500)
+func makeListHandler(db *database.Database, tmplEngine *templateEngine) middleware {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			log.Println("enter MakeListHandler", r.URL.String())
+			defer log.Println("exit MakeListHandler")
+			defer func() {
+				if r := recover(); r != nil {
+					msg := fmt.Sprintf("panic in MakeListHandler: %v\n%v", r, string(debug.Stack()))
+					log.Println(msg)
+					http.Error(w, msg, 500)
+				}
+			}()
+
+			u := getUserFromRequest(w, r)
+			if u == nil {
+				return
 			}
-		}()
 
-		tapes, getErr := tape.GetAllTapes(db)
-		log.Println("GetAllTapes returned items: ", len(tapes))
-		for i, v := range tapes {
-			log.Println(i, v)
+			tapes, getErr := tape.GetTapesForUser(u.Id, db)
+			log.Println("GetAllTapes returned items: ", len(tapes))
+			for i, v := range tapes {
+				log.Println(i, v)
+			}
+
+			if getErr != nil {
+				http.Error(w, getErr.Error(), 500)
+				return
+			}
+
+			bytes, evalErr := tmplEngine.eval("list.html", tapes)
+			if evalErr != nil {
+				http.Error(w, evalErr.Error(), 500)
+				return
+			}
+
+			log.Println("write bytes to response")
+			w.Write(bytes)
 		}
-
-		if getErr != nil {
-			http.Error(w, getErr.Error(), 500)
-			return
-		}
-
-		bytes, evalErr := tmplEngine.eval("list.html", tapes)
-		if evalErr != nil {
-			http.Error(w, evalErr.Error(), 500)
-			return
-		}
-
-		log.Println("write bytes to response")
-		w.Write(bytes)
 	}
 }
 
-func makePlaybackHandler(db *database.Database, tmplEngine *templateEngine) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("enter MakePlaybackHandler", r.URL.String())
-		defer log.Println("exit MakePlaybackHandler")
+func makePlaybackHandler(db *database.Database, tmplEngine *templateEngine) middleware {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			log.Println("enter MakePlaybackHandler", r.URL.String())
+			defer log.Println("exit MakePlaybackHandler")
 
-		defer func() {
-			if r := recover(); r != nil {
-				msg := fmt.Sprintf("panic in MakePlaybackHandler: %v\n%v", r, string(debug.Stack()))
-				log.Println(msg)
-				http.Error(w, msg, 500)
+			defer func() {
+				if r := recover(); r != nil {
+					msg := fmt.Sprintf("panic in MakePlaybackHandler: %v\n%v", r, string(debug.Stack()))
+					log.Println(msg)
+					http.Error(w, msg, 500)
+				}
+			}()
+
+			params := r.URL.Query()
+			id, parseErr := strconv.ParseInt(params.Get("id"), 10, 64)
+			if parseErr != nil {
+				http.Error(w, fmt.Errorf("tape id failed to parse as number: %w", parseErr).Error(), 500)
+				return
 			}
-		}()
 
-		params := r.URL.Query()
-		id, parseErr := strconv.ParseInt(params.Get("id"), 10, 64)
-		if parseErr != nil {
-			http.Error(w, fmt.Errorf("tape id failed to parse as number: %w", parseErr).Error(), 500)
-			return
+			t, getErr := tape.GetTape(id, db)
+			if getErr != nil {
+				http.Error(w, getErr.Error(), 500)
+				return
+			}
+
+			bytes, evalErr := tmplEngine.eval("playback.html", t)
+			if evalErr != nil {
+				http.Error(w, evalErr.Error(), 500)
+				return
+			}
+
+			log.Println("write bytes to response")
+			w.Write(bytes)
 		}
-
-		t, getErr := tape.GetTape(db, id)
-		if getErr != nil {
-			http.Error(w, getErr.Error(), 500)
-			return
-		}
-
-		bytes, evalErr := tmplEngine.eval("playback.html", t)
-		if evalErr != nil {
-			http.Error(w, evalErr.Error(), 500)
-			return
-		}
-
-		log.Println("write bytes to response")
-		w.Write(bytes)
 	}
 }
 
-func makeRecordHandler(_ *database.Database, tmplEngine *templateEngine) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("enter MakeRecordHandler", r.URL.String())
-		defer log.Println("exit MakeRecordHandler")
+func makeRecordHandler(_ *database.Database, tmplEngine *templateEngine) middleware {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			log.Println("enter MakeRecordHandler", r.URL.String())
+			defer log.Println("exit MakeRecordHandler")
 
-		defer func() {
-			if r := recover(); r != nil {
-				msg := fmt.Sprintf("panic in MakeRecordHandler: %v\n%v", r, string(debug.Stack()))
-				log.Println(msg)
-				http.Error(w, msg, 500)
+			defer func() {
+				if r := recover(); r != nil {
+					msg := fmt.Sprintf("panic in MakeRecordHandler: %v\n%v", r, string(debug.Stack()))
+					log.Println(msg)
+					http.Error(w, msg, 500)
+				}
+			}()
+
+			u := getUserFromRequest(w, r)
+			if u == nil {
+				return
 			}
-		}()
 
-		bytes, evalErr := tmplEngine.eval("record.html", nil)
-		if evalErr != nil {
-			http.Error(w, evalErr.Error(), 500)
-			return
+			bytes, evalErr := tmplEngine.eval("record.html", nil)
+			if evalErr != nil {
+				http.Error(w, evalErr.Error(), 500)
+				return
+			}
+
+			log.Println("write bytes to response")
+			w.Write(bytes)
 		}
-
-		log.Println("write bytes to response")
-		w.Write(bytes)
 	}
 }
 
@@ -352,7 +423,7 @@ func (t templateEngine) String() string {
 		rootName = t.root.Name()
 	}
 
-	return fmt.Sprintf("template engine %v %v %v", t.dir, t.cache, rootName)
+	return fmt.Sprintf("template engine %q %v %q", t.dir, t.cache, rootName)
 }
 
 func (t *templateEngine) lookup(name string) (*template.Template, error) {
