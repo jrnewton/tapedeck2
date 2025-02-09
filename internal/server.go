@@ -30,8 +30,7 @@ func (rc ReturnCode) Code() int {
 
 const (
 	RcOkay ReturnCode = iota
-	// start after 4 which is always warning
-	_
+	_                 // skip 1 thru 4 which are warning levels.
 	_
 	_
 	_
@@ -126,7 +125,7 @@ func RunServer(jsonConfigPath string) (rc ReturnCode, err error) {
 	cache := config.ProductionMode
 	log.Println("using template directory", templateDir, "and cache", cache)
 	tmplEngine := newTemplateEngine(templateDir, cache)
-	initErr := tmplEngine.Init()
+	initErr := tmplEngine.init()
 	if initErr != nil {
 		return RcTemplateEngine, fmt.Errorf("template engine init failed: %w", initErr)
 	}
@@ -148,17 +147,12 @@ func RunServer(jsonConfigPath string) (rc ReturnCode, err error) {
 
 	// Open routes
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
-	http.HandleFunc("/", makeRootHandler(tmplEngine))
+	http.HandleFunc("/", chain(mlog, makeRootHandler(tmplEngine)))
 
 	// Secure routes
 	http.HandleFunc("/s/list", makeListHandler(db, tmplEngine))
 	http.HandleFunc("/s/playback", makePlaybackHandler(db, tmplEngine))
 	http.HandleFunc("/s/record", makeRecordHandler(db, tmplEngine))
-
-	//TODO: define middelware to dump headers based on log level.
-	//TODO: extract `X-Email` header value and maybe `X-User`.
-	//X-Email:[rocketnewton@gmail.com]
-	//X-User:[112165920196384629909]
 
 	log.Println("server starting on", config.ServerListenAddr)
 	err = http.ListenAndServe(config.ServerListenAddr, nil)
@@ -181,34 +175,73 @@ func RunServer(jsonConfigPath string) (rc ReturnCode, err error) {
 // 	return userpkg.GetUserByEmail(db, email)
 // }
 
-type handler func(http.ResponseWriter, *http.Request)
+// chain takes middleware functions
+func chain(m ...middleware) http.HandlerFunc {
+	if len(m) == 0 {
+		panic("at least one middleware function required")
+	}
 
-func makeRootHandler(tmplEngine *TemplateEngine) handler {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("enter rootHandler", r.URL.String())
-		defer log.Println("exit rootHandler")
-		//http.Redirect(w, r, "/testcases", http.StatusTemporaryRedirect)
+	wrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("final\n")
+	})
 
-		defer func() {
-			if r := recover(); r != nil {
-				msg := fmt.Sprintf("panic in handleRoot: %v\n%v", r, string(debug.Stack()))
-				log.Println(msg)
-				http.Error(w, msg, 500)
+	for i := len(m) - 1; i >= 0; i-- {
+		wrapped = m[i](wrapped)
+	}
+
+	return wrapped
+}
+
+// middleware is a [http.HandlerFunc] that can be chained together with other
+// functions to build so-called "middleware"
+type middleware func(http.HandlerFunc) http.HandlerFunc
+
+// mlog is a [middleware] logging function
+func mlog(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//TODO: define middelware to dump headers based on log level.
+		//TODO: extract `X-Email` header value and maybe `X-User`.
+		//X-Email:[rocketnewton@gmail.com]
+		//X-User:[112165920196384629909]
+
+		email := r.Header.Get("X-EMAIL")
+		user := r.Header.Get("X-USER")
+		// log.Printf("all headers %v\n", r.Header)
+		log.Printf("email is '%s', user is '%s'\n", email, user)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func makeRootHandler(tmplEngine *templateEngine) middleware {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			log.Println("enter rootHandler", r.URL.String())
+			defer log.Println("exit rootHandler")
+
+			defer func() {
+				if r := recover(); r != nil {
+					msg := fmt.Sprintf("panic in handleRoot: %v\n%v", r, string(debug.Stack()))
+					log.Println(msg)
+					http.Error(w, msg, 500)
+				}
+			}()
+
+			bytes, evalErr := tmplEngine.eval("index.html", "")
+			if evalErr != nil {
+				http.Error(w, evalErr.Error(), 500)
+				return
 			}
-		}()
 
-		bytes, evalErr := tmplEngine.Eval("index.html", "")
-		if evalErr != nil {
-			http.Error(w, evalErr.Error(), 500)
-			return
+			log.Println("write bytes to response")
+			w.Write(bytes)
+
+			next.ServeHTTP(w, r)
 		}
-
-		log.Println("write bytes to response")
-		w.Write(bytes)
 	}
 }
 
-func makeListHandler(db *database.Database, tmplEngine *TemplateEngine) handler {
+func makeListHandler(db *database.Database, tmplEngine *templateEngine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("enter MakeListHandler", r.URL.String())
 		defer log.Println("exit MakeListHandler")
@@ -231,7 +264,7 @@ func makeListHandler(db *database.Database, tmplEngine *TemplateEngine) handler 
 			return
 		}
 
-		bytes, evalErr := tmplEngine.Eval("list.html", tapes)
+		bytes, evalErr := tmplEngine.eval("list.html", tapes)
 		if evalErr != nil {
 			http.Error(w, evalErr.Error(), 500)
 			return
@@ -242,7 +275,7 @@ func makeListHandler(db *database.Database, tmplEngine *TemplateEngine) handler 
 	}
 }
 
-func makePlaybackHandler(db *database.Database, tmplEngine *TemplateEngine) handler {
+func makePlaybackHandler(db *database.Database, tmplEngine *templateEngine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("enter MakePlaybackHandler", r.URL.String())
 		defer log.Println("exit MakePlaybackHandler")
@@ -268,7 +301,7 @@ func makePlaybackHandler(db *database.Database, tmplEngine *TemplateEngine) hand
 			return
 		}
 
-		bytes, evalErr := tmplEngine.Eval("playback.html", t)
+		bytes, evalErr := tmplEngine.eval("playback.html", t)
 		if evalErr != nil {
 			http.Error(w, evalErr.Error(), 500)
 			return
@@ -279,7 +312,7 @@ func makePlaybackHandler(db *database.Database, tmplEngine *TemplateEngine) hand
 	}
 }
 
-func makeRecordHandler(_ *database.Database, tmplEngine *TemplateEngine) handler {
+func makeRecordHandler(_ *database.Database, tmplEngine *templateEngine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("enter MakeRecordHandler", r.URL.String())
 		defer log.Println("exit MakeRecordHandler")
@@ -292,7 +325,7 @@ func makeRecordHandler(_ *database.Database, tmplEngine *TemplateEngine) handler
 			}
 		}()
 
-		bytes, evalErr := tmplEngine.Eval("record.html", nil)
+		bytes, evalErr := tmplEngine.eval("record.html", nil)
 		if evalErr != nil {
 			http.Error(w, evalErr.Error(), 500)
 			return
@@ -303,17 +336,17 @@ func makeRecordHandler(_ *database.Database, tmplEngine *TemplateEngine) handler
 	}
 }
 
-// TemplateEngine is built upon [template.Template]. It is used to cache and evaluate templates.
-// Call [New] to create a new instance and call [TemplateEngine.Init] before first use.
-// Failure call [TemplateEngine.Init] before first use will result in a panic.
-type TemplateEngine struct {
+// templateEngine is built upon [template.Template]. It is used to cache and evaluate templates.
+// Call [newTemplateEngine] to create a new instance and call [templateEngine.Init] before first use.
+// Failure call [templateEngine.Init] before first use will result in a panic.
+type templateEngine struct {
 	dir         string
 	root        *template.Template
 	cache       bool
 	initialized bool
 }
 
-func (t TemplateEngine) String() string {
+func (t templateEngine) String() string {
 	var rootName = "nil"
 	if t.root != nil {
 		rootName = t.root.Name()
@@ -322,7 +355,7 @@ func (t TemplateEngine) String() string {
 	return fmt.Sprintf("template engine %v %v %v", t.dir, t.cache, rootName)
 }
 
-func (t *TemplateEngine) lookup(name string) (*template.Template, error) {
+func (t *templateEngine) lookup(name string) (*template.Template, error) {
 	if !t.initialized {
 		panic(fmt.Errorf("template engine not initialized"))
 	}
@@ -338,18 +371,18 @@ func (t *TemplateEngine) lookup(name string) (*template.Template, error) {
 	return t.root.Lookup(name), nil
 }
 
-func newTemplateEngine(templateDir string, cache bool) *TemplateEngine {
+func newTemplateEngine(templateDir string, cache bool) *templateEngine {
 	log.Println("enter NewTemplateEngine", templateDir, cache)
 	defer log.Println("exit NewTemplateEngine")
 
-	t := new(TemplateEngine)
+	t := new(templateEngine)
 	t.dir = templateDir
 	t.cache = cache
 	log.Println("template engine", t)
 	return t
 }
 
-func (engine *TemplateEngine) Init() (err error) {
+func (engine *templateEngine) init() (err error) {
 	log.Println("enter Init", engine.dir, engine.cache)
 	defer log.Println("exit Init")
 
@@ -364,7 +397,7 @@ func (engine *TemplateEngine) Init() (err error) {
 	return
 }
 
-func (engine *TemplateEngine) cacheAll() error {
+func (engine *templateEngine) cacheAll() error {
 	log.Println("enter cacheAll", engine.dir, engine.cache)
 	defer log.Println("exit cacheAll")
 
@@ -387,8 +420,8 @@ func (engine *TemplateEngine) cacheAll() error {
 	return nil
 }
 
-// Eval evaluates the template with the given fileName using the given data.
-func (engine *TemplateEngine) Eval(fileName string, data any) ([]byte, error) {
+// eval evaluates the template with the given fileName using the given data.
+func (engine *templateEngine) eval(fileName string, data any) ([]byte, error) {
 	log.Println("enter Eval", fileName)
 	defer log.Println("exit Eval", fileName)
 
