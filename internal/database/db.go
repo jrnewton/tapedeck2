@@ -38,7 +38,7 @@ type Database struct {
 }
 
 func (db *Database) String() string {
-	return fmt.Sprintf("database %v %v", db.filePath, db.state)
+	return fmt.Sprintf("database %q %v", db.filePath, db.state)
 }
 
 func New(filePath string) *Database {

@@ -56,7 +56,7 @@ func main() {
 	} else if action == "user-delete" {
 		panic("delete-user is not implemented")
 	} else {
-		fmt.Printf("Unknown action value '%s'\n", action)
+		fmt.Printf("Unknown action value %q\n", action)
 		flag.Usage()
 	}
 }

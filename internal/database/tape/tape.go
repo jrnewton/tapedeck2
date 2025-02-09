@@ -72,7 +72,7 @@ type TapeSource struct {
 }
 
 func (t *Tape) String() string {
-	return fmt.Sprintf("tape %v %.20v", t.Id, t.Title)
+	return fmt.Sprintf("tape %q %.20q", t.Id, t.Title)
 }
 
 func tapeCreator(stmt *sqlite.Stmt) (*Tape, error) {
