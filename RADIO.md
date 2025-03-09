@@ -15,5 +15,5 @@
 * :heavy_check_mark: [Live Stream](https://womr.streamguys1.com/live?aw_0_req.gdpr=true&us_privacy=1YNN)
 
 # [WCUW](https://wcuw.org)
-* :heavy_check_mark: [Archives]() Content is available for last 3 weeks and everything is controlled by spinitron.  Needs more research.  Entire show is delivered via single `m3u8` file.
+* :heavy_check_mark: [Archives](https://spinitron.com/WCUW/calendar) Content is available for last 2 weeks and everything is controlled by spinitron.  Needs more research.
 * :heavy_check_mark: [Live Stream](https://peridot.streamguys1.com:5495/live)
