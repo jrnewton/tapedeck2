@@ -67,7 +67,7 @@ func Insert(db *database.Database, user User) error {
 			":email":    user.Email,
 			":provider": user.Provider,
 			":status":   user.Status,
-			":created":  user.DateCreated,
+			":created":  user.Created,
 		},
 	})
 
