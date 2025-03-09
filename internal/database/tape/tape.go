@@ -9,10 +9,6 @@ import (
 )
 
 const (
-	SchemaVersion = 1
-)
-
-const (
 	// Tape is waiting to be processed
 	StatusTodo = "todo"
 	// Tape is being processed
@@ -26,15 +22,20 @@ const (
 // Tape is the digital equivalent to a physical cassette tape.
 // It holds something recorded off the radio.
 type Tape struct {
-	Id    int64
-	Title string
-	Desc  string
-	// Status of the processing for the tape
+	Id int64
+	// Station call letters.
+	Station string
+	Title   string
+	Desc    string
+	AirDate string
+	// Status of the processing for the tape.
 	Status string
-	// StatusMsg provides additional details when Status is [StatusError]
-	StatusMsg   string
-	DateCreated string
-	DateUpdated string
+	// StatusMsg provides additional details when Status is [StatusError].
+	StatusMsg string
+	// timestamp when the show as first downloaded.
+	Created string
+	// timestamp when the show was updated.
+	Updated string
 }
 
 const (
@@ -75,15 +76,19 @@ func (t *Tape) String() string {
 	return fmt.Sprintf("tape %q %.20q", t.Id, t.Title)
 }
 
+const tapeSelectSql = "SELECT T.*, S.* FROM TAPE T INNER JOIN STATION S ON T.STATION_ID = S.ID"
+
 func tapeCreator(stmt *sqlite.Stmt) (*Tape, error) {
 	return &Tape{
-		Id:          stmt.GetInt64("ID"),
-		Title:       stmt.GetText("TITLE"),
-		Desc:        stmt.GetText("DESC"),
-		Status:      stmt.GetText("STATUS"),
-		StatusMsg:   stmt.GetText("STATUS_MSG"),
-		DateCreated: stmt.GetText("DATE_CREATED"),
-		DateUpdated: stmt.GetText("DATE_UPDATED"),
+		Id:        stmt.GetInt64("T.ID"),
+		Title:     stmt.GetText("T.TITLE"),
+		Desc:      stmt.GetText("T.DESC"),
+		AirDate:   stmt.GetText("T.AIR_DATE"),
+		Status:    stmt.GetText("T.STATUS"),
+		StatusMsg: stmt.GetText("T.STATUS_MSG"),
+		Created:   stmt.GetText("T.CREATED_AT"),
+		Updated:   stmt.GetText("T.UPDATED_AT"),
+		Station:   stmt.GetText("S.CALL_LETTERS"),
 	}, nil
 }
 
@@ -94,7 +99,7 @@ func GetTapesForUser(userId int64, db *database.Database) ([]*Tape, error) {
 	tapes := make([]*Tape, 0)
 	err := db.RunQuery(database.Query{
 		Name:           "GetTapesForUser",
-		Sql:            "SELECT * FROM TAPE WHERE USER_ID=:id;",
+		Sql:            tapeSelectSql + " WHERE T.USER_ID=:id;",
 		Named:          map[string]any{":id": userId},
 		PerformsUpdate: false,
 		ResultFunc: func(stmt *sqlite.Stmt) error {
@@ -117,7 +122,7 @@ func GetTape(id int64, db *database.Database) (*Tape, error) {
 	var tape *Tape
 	err := db.RunQuery(database.Query{
 		Name:           "GetTape",
-		Sql:            "SELECT * FROM TAPE WHERE ID=:id;",
+		Sql:            tapeSelectSql + " WHERE T.ID=:id;",
 		PerformsUpdate: false,
 		Named:          map[string]any{":id": id},
 		ResultFunc: func(stmt *sqlite.Stmt) error {
