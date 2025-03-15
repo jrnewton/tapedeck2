@@ -11,3 +11,6 @@ dist/
 *.db
 # local dev
 ./user/
+# audio
+*.mp3
+*.m3u
