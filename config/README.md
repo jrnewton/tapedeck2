@@ -1,1 +1,0 @@
-This directory contains configuration files for production and local dev setups.
